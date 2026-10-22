@@ -1,6 +1,6 @@
-# Momentica Backend
+# Momentic Backend
 
-API for Momentica — people create a personalized, interactive page for a moment (a first birthday, a wedding invitation, a proposal) and share it as a link that stays live for as long as they paid for.
+API for Momentic — people create a personalized, interactive page for a moment (a first birthday, a wedding invitation, a proposal) and share it as a link that stays live for as long as they paid for.
 
 This service is **API-only**. The templates themselves are pages in a separate web app at `momentica.ferbotz.com`; this backend serves the catalogue, stores the personalization data, and decides what a given link is allowed to show.
 

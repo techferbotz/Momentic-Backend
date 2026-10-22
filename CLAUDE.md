@@ -1,6 +1,6 @@
-# Momentica Backend
+# Momentic Backend
 
-Backend for Momentica — a mobile-first app where users create personalized, interactive digital experiences (birthdays, invitations, proposals, greetings) and share them via `momentica.ferbotz.com/{shareCode}`. Templates render on the frontend; this backend stores personalization data, serves public creation reads, and handles media, auth, and paid publishing.
+Backend for Momentic — a mobile-first app where users create personalized, interactive digital experiences (birthdays, invitations, proposals, greetings) and share them via `momentica.ferbotz.com/{shareCode}`. Templates render on the frontend; this backend stores personalization data, serves public creation reads, and handles media, auth, and paid publishing.
 
 ## House of Apps protocols
 

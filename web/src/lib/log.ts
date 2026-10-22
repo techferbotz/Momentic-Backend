@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
  * to start without DATABASE_URL, JWT_SECRET and the rest. The renderer has none
  * of those, so importing it would trade "no logging" for "does not boot". The
  * ~25 lines are worth it, and the output format matches so both halves of
- * Momentica read the same in `docker logs`.
+ * Momentic read the same in `docker logs`.
  */
 type Level = 'debug' | 'info' | 'warn' | 'error';
 

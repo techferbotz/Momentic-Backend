@@ -1,4 +1,4 @@
-# Momentica
+# Momentic
 #
 # The shopfront is meant to be found. Everything else is somebody's private
 # moment: privacy for a published link is nothing but the unguessability of

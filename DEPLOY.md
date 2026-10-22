@@ -1,4 +1,4 @@
-# Deploying Momentica
+# Deploying Momentic
 
 Target: a single EC2 instance running the API in Docker, Postgres 16 on the host, and nginx terminating TLS.
 
@@ -175,7 +175,7 @@ Images are tagged `momentica-api:latest`; keep the previous one tagged before bu
 
 ## The live instance (as deployed 2026-08-26)
 
-Momentica runs as the fourth app on a shared `t3.micro` in `ap-south-1`
+Momentic runs as the fourth app on a shared `t3.micro` in `ap-south-1`
 (`i-0ee7ba0922056100d`, `13.205.128.80`) alongside AuraPix, Billanta and
 Curiously. The house pattern there is: one Docker container per app publishing
 to a loopback port, one nginx site per hostname, and a single host Postgres with
@@ -193,7 +193,7 @@ a database and role per app.
 | S3 IAM user | `momentica-app`, inline policy `momentica-media-rw` |
 
 Loopback ports already taken on that box: `8080` AuraPix, `8090` Curiously,
-`8091` Billanta, `8092` Momentica.
+`8091` Billanta, `8092` Momentic.
 
 ### Two things that will bite you
 

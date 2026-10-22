@@ -274,7 +274,7 @@ async function main(): Promise<void> {
         method: 'POST',
         body: JSON.stringify({
           secret: env.testLoginSecret,
-          email: `smoke-${Date.now()}@momentica.test`,
+          email: `smoke-${Date.now()}@momentic.test`,
         }),
       }),
       'test login',

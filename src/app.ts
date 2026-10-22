@@ -48,7 +48,7 @@ export function createApp(): express.Express {
 function start(): void {
   const app = createApp();
   const server = app.listen(env.port, () => {
-    logger.info('Momentica API listening', {
+    logger.info('Momentic API listening', {
       port: env.port,
       env: env.nodeEnv,
       storage: env.s3 ? 'enabled' : 'disabled',

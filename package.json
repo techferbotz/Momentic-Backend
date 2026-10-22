@@ -1,8 +1,8 @@
 {
-  "name": "momentica-backend",
+  "name": "momentic-backend",
   "version": "1.0.0",
   "private": true,
-  "description": "API backend for Momentica \u2014 turn moments into memories",
+  "description": "API backend for Momentic \u2014 turn moments into memories",
   "main": "dist/app.js",
   "engines": {
     "node": ">=22"

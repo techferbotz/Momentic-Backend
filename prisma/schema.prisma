@@ -1,4 +1,4 @@
-// Momentica — data model.
+// Momentic — data model.
 //
 // Two ownership rules drive most of the shape here:
 //   1. A creation is owned by a DraftSession before login and by a User after it.
