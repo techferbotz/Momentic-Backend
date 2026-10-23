@@ -229,7 +229,7 @@ for `momentic.ferbotz.com`, and `.env.production` carries `PUBLIC_WEB_ORIGIN=htt
 
 | | |
 | --- | --- |
-| App directory | `/opt/apps/momentica/Momentica-backend` |
+| App directory | `/opt/apps/momentica/Momentica-Backend` |
 | Container | `momentica-app`, host port `127.0.0.1:8092` |
 | nginx site | `/etc/nginx/sites-available/momentica` → `momentic.ferbotz.com` |
 | Public base | `https://momentic.ferbotz.com/api` |
