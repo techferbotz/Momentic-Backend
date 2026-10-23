@@ -1,6 +1,6 @@
 # Momentic Backend
 
-Backend for Momentic — a mobile-first app where users create personalized, interactive digital experiences (birthdays, invitations, proposals, greetings) and share them via `momentica.ferbotz.com/{shareCode}`. Templates render on the frontend; this backend stores personalization data, serves public creation reads, and handles media, auth, and paid publishing.
+Backend for Momentic — a mobile-first app where users create personalized, interactive digital experiences (birthdays, invitations, proposals, greetings) and share them via `momentic.ferbotz.com/{shareCode}`. Templates render on the frontend; this backend stores personalization data, serves public creation reads, and handles media, auth, and paid publishing.
 
 ## House of Apps protocols
 
@@ -17,7 +17,7 @@ This project follows the shared HOA playbook in `G:\My Drive\HOA Protocols\`. Re
 
 - **No offline-first sync.** Creation is inherently online here (image upload, template fetch, payment), and a client-controlled `updatedAt` would break the sync watermark for no benefit. Protocol 04 scopes this to "where applicable".
 - **No `decimal.js` / `money.ts`.** The app stores no computed money — Play and RevenueCat own every amount. `Purchase.priceMinorUnits` is a `BigInt` recorded for reference and serialized as a string.
-- **One hostname, not one per service.** `momentica.ferbotz.com/api/*` is the API; `/` is reserved for the web renderer, which owns share links at `/{8-char code}`. Protocol 03's default is a whole subdomain per app.
+- **One hostname, not one per service.** `momentic.ferbotz.com/api/*` is the API; `/` is reserved for the web renderer, which owns share links at `/{8-char code}`. Protocol 03's default is a whole subdomain per app.
 - **Remote config is `GET /api/v1/config`, not a root `/config`** (protocol 10). Same reason: `/` belongs to the renderer. The app's base URL is `/api/v1/`, so the shared client's relative `GET config` lands on it unchanged.
 - **Legal pages are root paths routed by nginx to the API** (protocol 12). `/privacy`, `/terms`, `/delete-account` and their aliases are exact-match `location`s in `docker/nginx/momentica.conf` sending those six paths to the backend; everything else at `/` stays with the renderer. Keep that list in step with `modules/legal/legal.routes.ts`.
 

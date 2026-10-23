@@ -7,7 +7,7 @@ import type { GoneReason, RenderPayload, RouteState } from './types';
  * share link is `no-store`, so SSR fetches the API on every single request.
  * That call is ~1ms over loopback and ~100ms from anywhere else.
  */
-const API_BASE = (process.env.API_BASE ?? 'https://momentica.ferbotz.com/api').replace(/\/+$/, '');
+const API_BASE = (process.env.API_BASE ?? 'https://momentic.ferbotz.com/api').replace(/\/+$/, '');
 
 /** How long we will wait on the API before drawing the unavailable page. */
 const TIMEOUT_MS = Number(process.env.API_TIMEOUT_MS ?? 5000);

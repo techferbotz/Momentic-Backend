@@ -17,7 +17,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const API_BASE = (process.env.API_BASE ?? 'https://momentica.ferbotz.com/api').replace(/\/+$/, '');
+const API_BASE = (process.env.API_BASE ?? 'https://momentic.ferbotz.com/api').replace(/\/+$/, '');
 
 const manifestPath = fileURLToPath(new URL('../src/templates/manifest.json', import.meta.url));
 const { templates } = JSON.parse(readFileSync(manifestPath, 'utf8'));

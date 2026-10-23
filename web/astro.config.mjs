@@ -15,7 +15,7 @@ import node from '@astrojs/node';
 export default defineConfig({
   output: 'server',
   adapter: node({ mode: 'standalone' }),
-  site: 'https://momentica.ferbotz.com',
+  site: 'https://momentic.ferbotz.com',
   devToolbar: { enabled: false },
   server: { port: 4321, host: true },
   build: { inlineStylesheets: 'auto' },

@@ -1,7 +1,7 @@
 import type { RenderPayload } from './types';
 
 /** The public hostname. Not API_BASE, which is a loopback address in production. */
-export const PUBLIC_ORIGIN = (process.env.PUBLIC_ORIGIN ?? 'https://momentica.ferbotz.com').replace(
+export const PUBLIC_ORIGIN = (process.env.PUBLIC_ORIGIN ?? 'https://momentic.ferbotz.com').replace(
   /\/+$/,
   '',
 );

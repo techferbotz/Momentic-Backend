@@ -2,7 +2,7 @@
 
 API for Momentic — people create a personalized, interactive page for a moment (a first birthday, a wedding invitation, a proposal) and share it as a link that stays live for as long as they paid for.
 
-This service is **API-only**. The templates themselves are pages in a separate web app at `momentica.ferbotz.com`; this backend serves the catalogue, stores the personalization data, and decides what a given link is allowed to show.
+This service is **API-only**. The templates themselves are pages in a separate web app at `momentic.ferbotz.com`; this backend serves the catalogue, stores the personalization data, and decides what a given link is allowed to show.
 
 ## The flow it serves
 
@@ -61,7 +61,7 @@ Ownership is scoped to the calling principal on every query, and a row belonging
 
 Base path `/api/v1`. Ops endpoints are `/health` and `/health/db` on the service
 itself; in production everything is served under one hostname, so the public
-base is `https://momentica.ferbotz.com/api` and health is at `/api/health`.
+base is `https://momentic.ferbotz.com/api` and health is at `/api/health`.
 
 ### Identity
 

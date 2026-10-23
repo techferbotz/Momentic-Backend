@@ -10,7 +10,7 @@ Code: `src/modules/remoteConfig/`, `src/utils/deepMerge.ts`. Fixtures: `npm run 
 
 ## 1. The endpoint
 
-`GET https://momentica.ferbotz.com/api/v1/config` — under `/api/v1` rather than at the root
+`GET https://momentic.ferbotz.com/api/v1/config` — under `/api/v1` rather than at the root
 because `/` on this hostname belongs to the web renderer (a recorded deviation in `CLAUDE.md`).
 
 **Nothing about the caller is required.** No token, no draft token, no headers. Optional inputs,
@@ -58,7 +58,7 @@ answers even when Postgres is down.
 | `limits.uploadsPerHour` | `20` | from `RATE_LIMITS.upload` |
 | `limits.maxDrafts` / `maxImages` | `20` / `60` | from `CREATION_LIMITS` |
 | `limits.draftPreviewMinutes` | `30` | from `RENDER.draftTokenTtlSeconds` |
-| `web.origin` | `https://momentica.ferbotz.com` | from `PUBLIC_WEB_ORIGIN`; resolve template thumbnails against it |
+| `web.origin` | `https://momentic.ferbotz.com` | from `PUBLIC_WEB_ORIGIN`; resolve template thumbnails against it |
 | `links.privacyPolicy` / `terms` / `deleteAccount` | `<web.origin>/privacy` … | protocol 12 pages |
 | `links.supportEmail` | `support@ferbotz.com` | from `LEGAL_CONTACT_EMAIL` |
 
@@ -83,7 +83,7 @@ the container (env is read at start; no rebuild):
 # on the box, in the repo checkout — one line, no quotes around the JSON
 echo 'REMOTE_CONFIG_OVERRIDES={"maintenance":{"enabled":true,"message":"Back in 10 minutes"}}' >> .env
 docker compose -f docker-compose.prod.yml up -d app
-curl -s https://momentica.ferbotz.com/api/v1/config | head -c 300
+curl -s https://momentic.ferbotz.com/api/v1/config | head -c 300
 ```
 
 The container **refuses to start** on a bad override and names the path

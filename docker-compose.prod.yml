@@ -33,7 +33,7 @@ services:
         max-size: 10m
         max-file: '3'
 
-  # The web renderer — what recipients see at momentica.ferbotz.com/{code}.
+  # The web renderer — what recipients see at momentic.ferbotz.com/{code}.
   #
   # Deliberately a service in THIS file rather than a second compose project.
   # Two compose files sharing a project name treat each other's containers as
@@ -57,7 +57,7 @@ services:
       API_BASE: http://app:3000/api
       # The PUBLIC hostname, not API_BASE. Used to absolutise og:image, which
       # must be absolute or no link preview renders at all.
-      PUBLIC_ORIGIN: https://momentica.ferbotz.com
+      PUBLIC_ORIGIN: https://momentic.ferbotz.com
       # The renderer must never be the process that pushes Postgres into swap.
       NODE_OPTIONS: --max-old-space-size=128
       # Serves /states/{template}/{fixture} so a template's edge cases can be

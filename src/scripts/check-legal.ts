@@ -8,7 +8,7 @@
 process.env.DATABASE_URL ??= 'postgresql://check:check@localhost:5432/check';
 process.env.JWT_SECRET ??= 'check-placeholder-secret-of-at-least-32-chars';
 process.env.GOOGLE_CLIENT_ID ??= 'check.apps.googleusercontent.com';
-process.env.PUBLIC_WEB_ORIGIN ??= 'https://momentica.ferbotz.com';
+process.env.PUBLIC_WEB_ORIGIN ??= 'https://momentic.ferbotz.com';
 
 import type { AddressInfo } from 'node:net';
 import { createApp } from '../app';

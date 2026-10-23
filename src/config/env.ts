@@ -174,7 +174,7 @@ export const env = {
   googleClientId: readRequired('GOOGLE_CLIENT_ID'),
   testLoginSecret,
 
-  /** Where the rendered experiences live, e.g. https://momentica.ferbotz.com */
+  /** Where the rendered experiences live, e.g. https://momentic.ferbotz.com */
   publicWebOrigin,
   /** Extra browser origins allowed to call this API, comma-separated. */
   corsOrigins: (readOptional('CORS_ORIGINS') ?? '')

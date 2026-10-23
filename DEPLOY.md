@@ -34,7 +34,7 @@ PORT=3000
 DATABASE_URL="postgresql://momentica:PASSWORD@host.docker.internal:5432/momentica?schema=public"
 JWT_SECRET="$(openssl rand -base64 48)"
 GOOGLE_CLIENT_ID="....apps.googleusercontent.com"
-PUBLIC_WEB_ORIGIN="https://momentica.ferbotz.com"
+PUBLIC_WEB_ORIGIN="https://momentic.ferbotz.com"
 
 AWS_REGION=ap-south-1
 AWS_S3_BUCKET=momentica-media
@@ -96,7 +96,7 @@ ssh -i <box-key>.pem ubuntu@13.205.128.80
 cd /opt/apps/momentica/Momentica-Backend
 git pull
 sudo docker compose -f docker-compose.prod.yml up -d --build app
-curl -fsS https://momentica.ferbotz.com/api/health
+curl -fsS https://momentic.ferbotz.com/api/health
 ```
 
 **Deploy WITH a migration** — order matters, migrate first so the columns exist
@@ -130,7 +130,7 @@ sudo docker compose -f docker-compose.prod.yml logs --tail=100 app
 sudo cp docker/nginx/momentica.conf /etc/nginx/sites-available/momentica
 sudo ln -s /etc/nginx/sites-available/momentica /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
-sudo certbot --nginx -d momentica.ferbotz.com
+sudo certbot --nginx -d momentic.ferbotz.com
 ```
 
 Certbot installs its own renewal timer; confirm with `systemctl list-timers | grep certbot`.
@@ -170,7 +170,7 @@ Nothing expires links on a schedule — expiry is derived from `expiresAt` at re
 Objects must be readable without credentials: recipients are anonymous and the page loads images directly. Privacy comes from the key being unguessable (`img/{uuid}/full.webp`), not from access control, and keys carry no user or creation segment so two links cannot be tied back to the same author.
 
 - Block public **ACLs**, allow public **read** via bucket policy on `img/*`
-- CORS: allow `GET` from `https://momentica.ferbotz.com`
+- CORS: allow `GET` from `https://momentic.ferbotz.com`
 - Lifecycle: none — cleanup is handled by the cron jobs above
 
 Putting CloudFront in front later is a drop-in change: point `S3_PUBLIC_BASE_URL` at the distribution.
@@ -180,16 +180,16 @@ Putting CloudFront in front later is a drop-in change: point `S3_PUBLIC_BASE_URL
 1. Create the products in Play Console. The grid is 3 tiers × 5 durations, named `publish_tier{A|B|C}_{1|3|7|30|90}d` — `npm run check:pricing` enumerates exactly what must exist.
 2. Import them into RevenueCat and expose them as Offerings.
 3. In the app, set the RevenueCat **app user id to this backend's user id** after sign-in. Purchase verification is scoped to that customer, and a mismatch means a user's own purchase will not verify.
-4. Point the RevenueCat webhook at `https://momentica.ferbotz.com/api/v1/webhooks/revenuecat` and set its Authorization header to `REVENUECAT_WEBHOOK_SECRET`.
+4. Point the RevenueCat webhook at `https://momentic.ferbotz.com/api/v1/webhooks/revenuecat` and set its Authorization header to `REVENUECAT_WEBHOOK_SECRET`.
 
 **Confirm before launch:** `src/billing/revenueCat.ts` reads the purchase fields (`store_purchase_identifier`, `product_id`, `id`, `purchased_at_ms`) from the documented v2 customer-purchases response. Make one real sandbox purchase and check the logs. If the shape has drifted, the module raises and logs the raw payload rather than granting anything — a mismatch shows up as publishes failing, never as free hosting.
 
 ## 9. After deploying
 
 ```bash
-curl -fsS https://momentica.ferbotz.com/api/health
-curl -fsS https://momentica.ferbotz.com/api/health/db
-curl -fsS https://momentica.ferbotz.com/api/v1/feed | head -c 400
+curl -fsS https://momentic.ferbotz.com/api/health
+curl -fsS https://momentic.ferbotz.com/api/health/db
+curl -fsS https://momentic.ferbotz.com/api/v1/feed | head -c 400
 ```
 
 `/api/health/db` returns 503 if Postgres is unreachable, which makes it the right target for an uptime check.
@@ -197,13 +197,13 @@ curl -fsS https://momentica.ferbotz.com/api/v1/feed | head -c 400
 The protocol endpoints (HOA 10 and 12):
 
 ```bash
-curl -fsS https://momentica.ferbotz.com/api/v1/config | head -c 400   # 200, no headers needed
+curl -fsS https://momentic.ferbotz.com/api/v1/config | head -c 400   # 200, no headers needed
 curl -fsS -o /dev/null -w '%{http_code} %{content_type}
-' https://momentica.ferbotz.com/privacy
+' https://momentic.ferbotz.com/privacy
 curl -fsS -o /dev/null -w '%{http_code} %{content_type}
-' https://momentica.ferbotz.com/terms
+' https://momentic.ferbotz.com/terms
 curl -fsS -o /dev/null -w '%{http_code} %{content_type}
-' https://momentica.ferbotz.com/delete-account
+' https://momentic.ferbotz.com/delete-account
 ```
 
 ## Rollback
@@ -220,12 +220,19 @@ Curiously. The house pattern there is: one Docker container per app publishing
 to a loopback port, one nginx site per hostname, and a single host Postgres with
 a database and role per app.
 
+**Hostname moved 2026-10-23: `momentica.ferbotz.com` → `momentic.ferbotz.com`**, with the product
+rename. The old DNS record was deleted in Cloudflare, so nothing redirects from it. Only the
+*hostname* changed: the database and role, the bucket, the IAM user, the compose project,
+container and image names, the nginx site file and the checkout path all still say `momentica`
+on purpose, because renaming them costs downtime for no visible gain. The certificate is issued
+for `momentic.ferbotz.com`, and `.env.production` carries `PUBLIC_WEB_ORIGIN=https://momentic.ferbotz.com`.
+
 | | |
 | --- | --- |
 | App directory | `/opt/apps/momentica/Momentica-backend` |
 | Container | `momentica-app`, host port `127.0.0.1:8092` |
-| nginx site | `/etc/nginx/sites-available/momentica` → `momentica.ferbotz.com` |
-| Public base | `https://momentica.ferbotz.com/api` |
+| nginx site | `/etc/nginx/sites-available/momentica` → `momentic.ferbotz.com` |
+| Public base | `https://momentic.ferbotz.com/api` |
 | Database | `momentica` / role `momentica` on the host Postgres 18 |
 | DB password | `~/.momentica-dbpass` on the instance (mode 600) |
 | S3 bucket | `momentica-media` (`ap-south-1`) |
@@ -268,7 +275,7 @@ Bucket `momentica-media` in `ap-south-1`, created 2026-08-26:
 - **Public ACLs blocked**, but `BlockPublicPolicy` is off so the scoped policy
   can apply. Public `s3:GetObject` is granted **only** on `img/*` — nothing else
   in the bucket is world-readable, and there is no `ListBucket` for anyone.
-- **CORS** allows `GET`/`HEAD` from `https://momentica.ferbotz.com`.
+- **CORS** allows `GET`/`HEAD` from `https://momentic.ferbotz.com`.
 - The application authenticates as IAM user **`momentica-app`**, whose only
   permission is `PutObject`/`GetObject`/`DeleteObject` on
   `arn:aws:s3:::momentica-media/img/*`. It cannot list the bucket, touch other
@@ -282,7 +289,7 @@ delete working.
 
 ### One hostname, two halves
 
-`momentica.ferbotz.com` serves both the API and (eventually) the renderer:
+`momentic.ferbotz.com` serves both the API and (eventually) the renderer:
 
 | Path | Served by |
 | --- | --- |

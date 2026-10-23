@@ -14,4 +14,4 @@ Disallow: /pv_
 Disallow: /d_
 Disallow: /
 
-Sitemap: https://momentica.ferbotz.com/sitemap.xml
+Sitemap: https://momentic.ferbotz.com/sitemap.xml

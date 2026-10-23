@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "The web renderer — what recipients see at momentica.ferbotz.com/{shareCode}",
+  "description": "The web renderer — what recipients see at momentic.ferbotz.com/{shareCode}",
   "engines": {
     "node": ">=22"
   },
