@@ -67,6 +67,56 @@ function readGroup<T extends Record<string, string>>(
   return Object.fromEntries(found) as T;
 }
 
+/**
+ * A duration WITH a unit, as `ms` (and therefore jsonwebtoken's `expiresIn`)
+ * understands it: 30d, 12h, 900s, "2 days".
+ */
+const DURATION_PATTERN =
+  /^\d+(\.\d+)?\s*(ms|msecs?|milliseconds?|s|secs?|seconds?|m|mins?|minutes?|h|hrs?|hours?|d|days?|w|weeks?|y|yrs?|years?)$/i;
+
+/**
+ * How long an access token stays valid. HOA protocol 04: by default it NEVER
+ * expires — `null` here makes `auth/jwt.ts` sign with no `exp` claim at all
+ * (not a far-future one), so nobody is returned to sign-in by the clock alone
+ * and there is nothing to refresh.
+ *
+ * A duration reinstates expiry without a code change. A bare number is returned
+ * as a number, which jsonwebtoken reads as seconds — left as a string, `ms`
+ * would read "900" as 900 milliseconds. Anything else fails the boot rather than
+ * silently changing how long people stay signed in.
+ */
+function readJwtExpiresIn(key: string): string | number | null {
+  const raw = readOptional(key) ?? 'never';
+  if (raw.toLowerCase() === 'never') return null;
+  if (/^\d+$/.test(raw)) return Number(raw);
+  if (!DURATION_PATTERN.test(raw)) {
+    problems.push(`${key} must be "never", a number of seconds, or a duration like "30d", got "${raw}"`);
+    return null;
+  }
+  return raw;
+}
+
+/**
+ * An optional env var holding a JSON object. Unset → null. Invalid JSON or a
+ * non-object fails the boot, so a mistyped value is never quietly ignored.
+ */
+function readJsonObject(key: string): Record<string, unknown> | null {
+  const raw = readOptional(key);
+  if (raw === undefined) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    problems.push(`${key} is not valid JSON: ${(err as Error).message}`);
+    return null;
+  }
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    problems.push(`${key} must be a JSON object`);
+    return null;
+  }
+  return parsed as Record<string, unknown>;
+}
+
 const rawNodeEnv = readOptional('NODE_ENV') ?? 'production';
 if (!['development', 'production', 'test'].includes(rawNodeEnv)) {
   problems.push(`NODE_ENV must be development, production or test, got "${rawNodeEnv}"`);
@@ -116,8 +166,11 @@ export const env = {
   databaseUrl: readRequired('DATABASE_URL'),
 
   jwtSecret,
-  accessTokenTtlSeconds: readNumber('ACCESS_TOKEN_TTL_SECONDS', 15 * 60),
-  refreshTokenTtlDays: readNumber('REFRESH_TOKEN_TTL_DAYS', 60),
+  /**
+   * null = access tokens carry no `exp` (the default). Rotating JWT_SECRET is
+   * then the only way to invalidate issued tokens, and it signs EVERY user out.
+   */
+  jwtExpiresIn: readJwtExpiresIn('JWT_EXPIRES_IN'),
   googleClientId: readRequired('GOOGLE_CLIENT_ID'),
   testLoginSecret,
 
@@ -134,6 +187,13 @@ export const env = {
   ai: anthropicApiKey
     ? { apiKey: anthropicApiKey, model: readOptional('AI_MODEL') ?? 'claude-opus-5' }
     : null,
+
+  /**
+   * A JSON patch over the remote config served by GET /config, applied for every
+   * caller — flips a switch with an .env edit and a container recreate. Keys are
+   * validated against the defaults at startup (HOA protocol 10).
+   */
+  remoteConfigOverrides: readJsonObject('REMOTE_CONFIG_OVERRIDES'),
 } as const;
 
 if (problems.length > 0) {

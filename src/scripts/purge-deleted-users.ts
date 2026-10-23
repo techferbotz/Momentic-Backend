@@ -6,12 +6,13 @@
  * cascade with the user, so run this only once the retention window your
  * accounting needs has passed.
  */
+import { ACCOUNT } from '../config/constants';
 import * as userRepo from '../repositories/userRepo';
 import * as s3Storage from '../storage/s3Storage';
 import { disconnectPrisma, prisma } from '../repositories/prisma';
 import { logger } from '../utils/logger';
 
-const RETENTION_DAYS = 30;
+const RETENTION_DAYS = ACCOUNT.deletedRetentionDays;
 
 async function main(): Promise<void> {
   const cutoff = new Date();

@@ -5,12 +5,13 @@
  * so an abandoned form leaves objects behind. The grace period keeps a
  * half-finished session from having its photos pulled out from under it.
  */
+import { CREATION_LIMITS } from '../config/constants';
 import * as imageRepo from '../repositories/imageRepo';
 import * as s3Storage from '../storage/s3Storage';
 import { disconnectPrisma } from '../repositories/prisma';
 import { logger } from '../utils/logger';
 
-const GRACE_HOURS = 48;
+const GRACE_HOURS = CREATION_LIMITS.orphanImageGraceHours;
 const BATCH = 500;
 
 async function main(): Promise<void> {

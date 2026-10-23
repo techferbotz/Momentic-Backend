@@ -45,8 +45,11 @@ There is no test framework. Correctness is held by `tsc --noEmit` plus fixture s
 - `check:validate` — accept/reject cases for each placeholder field type
 - `check:sharecode` — share codes are the right shape and uniformly distributed
 - `check:pricing` — every store product maps to exactly one tier and duration
+- `check:routes` — the real app in-process: catalogue, auth refusals, rate limits, CORS, permanent tokens
+- `check:config` — remote config: strict merge, header parsing, layer order, fail-fast overrides
+- `check:legal` — the legal pages carry the required sections and quote the real retention windows
 
-`npm run smoke` needs Postgres and a running server; it walks draft session → create → preview → sign in → claim → refresh rotation → stats → delete, and reports steps skipped because a feature group is unconfigured.
+`npm run check:all` runs every one of them. `npm run smoke` needs Postgres and a running server; it walks draft session → create → preview → sign in → claim → stats → delete → account deletion, and reports steps skipped because a feature group is unconfigured.
 
 ## Response shape
 
@@ -65,11 +68,16 @@ base is `https://momentica.ferbotz.com/api` and health is at `/api/health`.
 | Method | Path | Auth | Notes |
 | --- | --- | --- | --- |
 | POST | `/draft-sessions` | none | Issues the anonymous device token, sent afterwards as `X-Draft-Token` |
-| POST | `/auth/google` | none | `{ idToken, draftToken? }` — passing `draftToken` signs in and adopts the device's drafts in one call |
-| POST | `/auth/refresh` | none | `{ refreshToken }`, rotating |
-| POST | `/auth/logout` | none | `{ refreshToken }` |
+| POST | `/auth/google` | none | `{ idToken, draftToken? }` → `{ accessToken, user, claimed? }`. The token never expires (HOA protocol 04); there is no refresh or logout endpoint |
 | POST | `/auth/claim-drafts` | user | `{ draftToken }` |
-| GET / DELETE | `/me` | user | Profile; delete soft-deletes and revokes tokens |
+| GET / DELETE | `/me` | user | Profile; delete soft-deletes, and the account's token is rejected from then on |
+
+### App configuration and legal (public)
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/config` | Remote config (HOA protocol 10). No auth; optional `X-App-Platform`, `X-App-Version`, `X-App-Build`, `X-Device-Id`, `Authorization`. `no-store` |
+| GET | `/privacy`, `/terms`, `/delete-account` | **Root paths, not under `/api/v1`.** Self-contained HTML (HOA protocol 12). Aliases `/privacy-policy`, `/terms-of-service`, `/account-deletion` |
 
 ### Catalogue (public, cacheable)
 

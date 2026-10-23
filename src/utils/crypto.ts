@@ -1,6 +1,6 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 
-/** Opaque token for refresh tokens and draft sessions: 32 random bytes, base64url. */
+/** Opaque token for draft sessions: 32 random bytes, base64url. */
 export function generateOpaqueToken(): string {
   return randomBytes(32).toString('base64url');
 }

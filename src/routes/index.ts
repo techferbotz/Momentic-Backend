@@ -7,9 +7,12 @@ import { imagesRouter } from './images.routes';
 import { renderRouter } from './render.routes';
 import { billingRouter } from './billing.routes';
 import { webhooksRouter } from './webhooks.routes';
+import { remoteConfigRouter } from '../modules/remoteConfig/remoteConfig.routes';
+import { legalRouter } from '../modules/legal/legal.routes';
 
 /** Everything domain-facing is versioned; ops endpoints sit at the root. */
 export const apiRouter = Router();
+apiRouter.use(remoteConfigRouter);
 apiRouter.use(authRouter);
 apiRouter.use(feedRouter);
 apiRouter.use(creationsRouter);
@@ -20,4 +23,5 @@ apiRouter.use(webhooksRouter);
 
 export const rootRouter = Router();
 rootRouter.use(healthRouter);
+rootRouter.use(legalRouter);
 rootRouter.use('/api/v1', apiRouter);

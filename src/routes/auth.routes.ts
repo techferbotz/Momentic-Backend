@@ -11,8 +11,6 @@ const authLimit = rateLimit(RATE_LIMITS.auth, { name: 'auth' });
 const draftSessionLimit = rateLimit(RATE_LIMITS.draftSession, { name: 'draft-session' });
 
 authRouter.post('/auth/google', authLimit, authController.googleSignIn);
-authRouter.post('/auth/refresh', authLimit, authController.refresh);
-authRouter.post('/auth/logout', authController.logout);
 authRouter.post('/auth/claim-drafts', requireAuth, authController.claimDrafts);
 
 authRouter.get('/me', requireAuth, authController.me);

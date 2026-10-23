@@ -25,6 +25,13 @@ services:
     extra_hosts:
       # Lets DATABASE_URL point at a Postgres running on the EC2 host itself.
       - 'host.docker.internal:host-gateway'
+    # Request logs carry client IPs, and /delete-account promises they are not
+    # kept indefinitely. Docker's default json-file driver never rotates.
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
 
   # The web renderer — what recipients see at momentica.ferbotz.com/{code}.
   #

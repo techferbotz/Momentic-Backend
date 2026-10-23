@@ -1,6 +1,7 @@
 import type { RequestHandler } from 'express';
 import { ErrorCode, UnauthorizedError } from '../errors/AppError';
 import { verifyAccessToken } from '../auth/jwt';
+import * as authService from '../services/authService';
 import * as draftSessionService from '../services/draftSessionService';
 
 /**
@@ -21,15 +22,36 @@ function readBearer(header: string | undefined): string | null {
 }
 
 /** Signed-in users only. */
-export const requireAuth: RequestHandler = (req, _res, next) => {
-  const token = readBearer(req.header('authorization'));
-  if (!token) {
-    next(new UnauthorizedError('Authentication required', ErrorCode.AUTH_REQUIRED));
-    return;
+export const requireAuth: RequestHandler = async (req, _res, next) => {
+  try {
+    const token = readBearer(req.header('authorization'));
+    if (!token) {
+      next(new UnauthorizedError('Authentication required', ErrorCode.AUTH_REQUIRED));
+      return;
+    }
+    const userId = await authService.authenticate(token);
+    req.userId = userId;
+    req.principal = { kind: 'user', userId };
+    next();
+  } catch (err) {
+    next(err);
   }
-  const { userId } = verifyAccessToken(token);
-  req.userId = userId;
-  req.principal = { kind: 'user', userId };
+};
+
+/**
+ * Attaches the user when a valid token is present and carries on regardless.
+ * Signature only, no database: used by GET /config, which must answer even when
+ * Postgres is down (HOA protocol 10) and only wants the id for targeting.
+ */
+export const optionalAuth: RequestHandler = (req, _res, next) => {
+  const token = readBearer(req.header('authorization'));
+  if (token) {
+    try {
+      req.userId = verifyAccessToken(token).userId;
+    } catch {
+      // A rejected token on an optional route is the same as no token.
+    }
+  }
   next();
 };
 
@@ -42,7 +64,7 @@ export const requirePrincipal: RequestHandler = async (req, _res, next) => {
   try {
     const bearer = readBearer(req.header('authorization'));
     if (bearer) {
-      const { userId } = verifyAccessToken(bearer);
+      const userId = await authService.authenticate(bearer);
       req.userId = userId;
       req.principal = { kind: 'user', userId };
       next();

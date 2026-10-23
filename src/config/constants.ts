@@ -16,6 +16,16 @@ export const CREATION_LIMITS = {
   maxImagesPerPrincipal: 60,
   /** Unclaimed draft sessions untouched for this long are purged with their images. */
   abandonedDraftDays: 7,
+  /** Photos uploaded but never attached to a creation are removed after this long. */
+  orphanImageGraceHours: 48,
+} as const;
+
+export const ACCOUNT = {
+  /**
+   * A deleted account is hard-deleted, with everything it owns, this long after
+   * deletion. Quoted on the public /delete-account page — change both together.
+   */
+  deletedRetentionDays: 30,
 } as const;
 
 export const SHARE_CODE = {

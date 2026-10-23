@@ -17,17 +17,6 @@ export async function googleSignIn(req: Request, res: Response): Promise<void> {
   ok(res, await authService.loginWithGoogle(idToken, draftToken));
 }
 
-export async function refresh(req: Request, res: Response): Promise<void> {
-  const body = asObject(req.body);
-  ok(res, await authService.refresh(requireString(body, 'refreshToken')));
-}
-
-export async function logout(req: Request, res: Response): Promise<void> {
-  const body = asObject(req.body);
-  await authService.logout(requireString(body, 'refreshToken'));
-  ok(res, { loggedOut: true });
-}
-
 export async function claimDrafts(req: Request, res: Response): Promise<void> {
   const body = asObject(req.body);
   const draftToken = requireString(body, 'draftToken');

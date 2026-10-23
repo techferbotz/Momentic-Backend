@@ -21,12 +21,14 @@
     "check:validate": "ts-node src/scripts/check-validate.ts",
     "check:sharecode": "ts-node src/scripts/check-sharecode.ts",
     "check:pricing": "ts-node src/scripts/check-pricing.ts",
-    "check:all": "npm run check:errors && npm run check:routes && npm run check:registry && npm run check:validate && npm run check:sharecode && npm run check:pricing",
+    "check:all": "npm run check:errors && npm run check:routes && npm run check:registry && npm run check:validate && npm run check:sharecode && npm run check:pricing && npm run check:config && npm run check:legal",
     "smoke": "ts-node src/scripts/smoke-api.ts",
     "purge:drafts": "ts-node src/scripts/purge-abandoned-drafts.ts",
     "purge:users": "ts-node src/scripts/purge-deleted-users.ts",
     "cleanup:images": "ts-node src/scripts/cleanup-orphan-images.ts",
-    "check:routes": "ts-node src/scripts/check-routes.ts"
+    "check:routes": "ts-node src/scripts/check-routes.ts",
+    "check:config": "ts-node src/scripts/check-remote-config.ts",
+    "check:legal": "ts-node src/scripts/check-legal.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.750.0",

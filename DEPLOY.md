@@ -49,6 +49,20 @@ REVENUECAT_WEBHOOK_SECRET="$(openssl rand -base64 32)"
 
 Do **not** set `TEST_LOGIN_SECRET`. The process refuses to start in production if it is present.
 
+**`JWT_SECRET` is the only way to sign people out.** Access tokens never expire (HOA protocol 04;
+`JWT_EXPIRES_IN` defaults to `never`), so rotating the secret signs **every** user out at once.
+Never rotate it casually.
+
+Two optional knobs, both `.env`-only — a container **recreate** (`up -d app`), not a rebuild:
+
+- `JWT_EXPIRES_IN` — a duration such as `30d` reinstates token expiry.
+- `REMOTE_CONFIG_OVERRIDES` — a one-line JSON patch over `GET /api/v1/config`, e.g. the
+  maintenance switch. A key that does not exist in the defaults makes the container refuse to
+  start, naming the key. See `docs/REMOTE_CONFIG.md`.
+
+A container that will not start after an `.env` edit is a missing required variable or an invalid
+`REMOTE_CONFIG_OVERRIDES` — both by design. Read `logs --tail=30 app`.
+
 Feature groups are all-or-nothing. Setting three of the five AWS keys stops the boot with a message naming the missing ones — that is intentional, because silently disabling image uploads on a production deploy is worse than not starting.
 
 ## 4. Migrations — a separate step, every time
@@ -121,20 +135,33 @@ sudo certbot --nginx -d momentica.ferbotz.com
 
 Certbot installs its own renewal timer; confirm with `systemctl list-timers | grep certbot`.
 
+The vhost sends six root paths to the API instead of the renderer — the legal pages (HOA
+protocol 12): `/privacy`, `/terms`, `/delete-account` and their aliases. After changing
+`momentica.conf`, copy it over the live file **without** losing certbot's `ssl_*` lines (the repo
+copy carries them), then `nginx -t` before reloading.
+
 The `X-Forwarded-For` header in that config is load-bearing. The app sets `trust proxy`, and without the header every request looks like it came from loopback — all per-IP rate limits would collapse into a single shared bucket that throttles every recipient at once.
 
 ## 6. Scheduled jobs
 
+**These are public promises.** `/privacy` and `/delete-account` quote the windows below, so the
+jobs must actually be installed (`crontab -l` on the box) — a page that says "erased within 30
+days" with no job behind it is a false statement on a store listing.
+
 ```cron
 # Photos uploaded but never attached to a creation (48h grace)
-17 3 * * *  cd /srv/momentica && docker compose -f docker-compose.prod.yml run --rm api node dist/scripts/cleanup-orphan-images.js
+17 3 * * *  cd /opt/apps/momentica/Momentica-Backend && docker compose -f docker-compose.prod.yml run --rm app node dist/scripts/cleanup-orphan-images.js
 
 # Anonymous draft sessions nobody ever claimed (7 days)
-34 3 * * *  cd /srv/momentica && docker compose -f docker-compose.prod.yml run --rm api node dist/scripts/purge-abandoned-drafts.js
+34 3 * * *  cd /opt/apps/momentica/Momentica-Backend && docker compose -f docker-compose.prod.yml run --rm app node dist/scripts/purge-abandoned-drafts.js
 
 # Accounts past the 30-day deletion retention window
-51 3 * * 0  cd /srv/momentica && docker compose -f docker-compose.prod.yml run --rm api node dist/scripts/purge-deleted-users.js
+51 3 * * 0  cd /opt/apps/momentica/Momentica-Backend && docker compose -f docker-compose.prod.yml run --rm app node dist/scripts/purge-deleted-users.js
 ```
+
+The windows live in `src/config/constants.ts` (`CREATION_LIMITS`, `ACCOUNT`) and the legal pages
+import them, so changing one changes the page. API logs rotate at 3 × 10 MB (the `logging` block
+in `docker-compose.prod.yml`).
 
 Nothing expires links on a schedule — expiry is derived from `expiresAt` at read time, so a missed cron run cannot accidentally keep a lapsed link alive or kill a live one.
 
@@ -166,6 +193,18 @@ curl -fsS https://momentica.ferbotz.com/api/v1/feed | head -c 400
 ```
 
 `/api/health/db` returns 503 if Postgres is unreachable, which makes it the right target for an uptime check.
+
+The protocol endpoints (HOA 10 and 12):
+
+```bash
+curl -fsS https://momentica.ferbotz.com/api/v1/config | head -c 400   # 200, no headers needed
+curl -fsS -o /dev/null -w '%{http_code} %{content_type}
+' https://momentica.ferbotz.com/privacy
+curl -fsS -o /dev/null -w '%{http_code} %{content_type}
+' https://momentica.ferbotz.com/terms
+curl -fsS -o /dev/null -w '%{http_code} %{content_type}
+' https://momentica.ferbotz.com/delete-account
+```
 
 ## Rollback
 

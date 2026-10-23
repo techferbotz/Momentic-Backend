@@ -10,6 +10,7 @@ import type { AddressInfo } from 'node:net';
 import { createApp } from '../app';
 import { RATE_LIMITS } from '../config/constants';
 import { env } from '../config/env';
+import { signAccessToken } from '../auth/jwt';
 import { resetRateLimits } from '../middleware/rateLimit';
 import { CATEGORIES, TEMPLATES } from '../templates/registry';
 import { check, expectEqual, expectTrue, report } from './checkUtil';
@@ -233,6 +234,18 @@ async function main(): Promise<void> {
       undefined,
       'an unknown origin gets no allow header',
     );
+  });
+
+  await check('access tokens never expire and there is nothing to refresh (HOA protocol 04)', async () => {
+    const [, payload = ''] = signAccessToken('00000000-0000-0000-0000-000000000000').split('.');
+    const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    expectEqual(claims.exp, undefined, 'exp claim');
+    expectEqual(claims.iss, 'momentica', 'issuer');
+
+    for (const path of ['/auth/refresh', '/auth/logout']) {
+      const reply = await api(path, { method: 'POST' });
+      expectEqual(reply.status, 404, `${path} is gone`);
+    }
   });
 
   await check('the server does not advertise its stack', async () => {

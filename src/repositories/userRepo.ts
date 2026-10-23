@@ -45,10 +45,6 @@ export async function softDelete(id: string): Promise<void> {
       where: { ownerUserId: id, deletedAt: null },
       data: { deletedAt: now },
     }),
-    prisma.refreshToken.updateMany({
-      where: { userId: id, revokedAt: null },
-      data: { revokedAt: now },
-    }),
   ]);
 }
 

@@ -18,6 +18,8 @@ This project follows the shared HOA playbook in `G:\My Drive\HOA Protocols\`. Re
 - **No offline-first sync.** Creation is inherently online here (image upload, template fetch, payment), and a client-controlled `updatedAt` would break the sync watermark for no benefit. Protocol 04 scopes this to "where applicable".
 - **No `decimal.js` / `money.ts`.** The app stores no computed money — Play and RevenueCat own every amount. `Purchase.priceMinorUnits` is a `BigInt` recorded for reference and serialized as a string.
 - **One hostname, not one per service.** `momentica.ferbotz.com/api/*` is the API; `/` is reserved for the web renderer, which owns share links at `/{8-char code}`. Protocol 03's default is a whole subdomain per app.
+- **Remote config is `GET /api/v1/config`, not a root `/config`** (protocol 10). Same reason: `/` belongs to the renderer. The app's base URL is `/api/v1/`, so the shared client's relative `GET config` lands on it unchanged.
+- **Legal pages are root paths routed by nginx to the API** (protocol 12). `/privacy`, `/terms`, `/delete-account` and their aliases are exact-match `location`s in `docker/nginx/momentica.conf` sending those six paths to the backend; everything else at `/` stays with the renderer. Keep that list in step with `modules/legal/legal.routes.ts`.
 
 ## Language & Runtime
 
@@ -38,15 +40,23 @@ This project follows the shared HOA playbook in `G:\My Drive\HOA Protocols\`. Re
 - Prisma 6 — PIN to v6 (v7 removes `url = env("DATABASE_URL")` and requires a driver adapter).
 - ALL Prisma calls live in repositories. No Prisma anywhere outside the repository layer.
 
-## Auth
+## Auth (protocol 04)
 
 - Google Sign-In via google-auth-library: verify the idToken, `aud` must equal `GOOGLE_CLIENT_ID`. Never trust an unverified idToken.
-- Short-lived access JWT (~15m) via jsonwebtoken.
-- Refresh tokens: opaque 32 random bytes, stored ONLY as sha256 hash, rotating with theft detection. Never store a raw refresh token.
+- **The access JWT never expires.** No `exp` claim at all unless `JWT_EXPIRES_IN` sets a duration (default `never`). Sign-in returns exactly one token; there are **no refresh tokens**, no `/auth/refresh`, no `/auth/logout` — signing out is the app discarding its token.
+- A 401 means *rejected*, never *timed out*: the app discards the token and signs in again. The rejection reason is logged server-side and kept out of the response.
+- **Rotating `JWT_SECRET` signs every user out at once** — it is the only global revocation lever.
+- Because tokens never expire, `requireAuth`/`requirePrincipal` check the user row is still active on every signed-in request (`authService.authenticate`). That is what makes account deletion lock the token out. `optionalAuth` (used only by `/config`) checks the signature alone, so config never touches the database.
+- Anonymous devices use an opaque draft token (32 random bytes, stored only as a sha256 hash), sent as `X-Draft-Token`.
 
 ## Config
 
 - Fail fast: one `config/env.ts` validates required env at startup and throws if missing. NOTHING else reads `process.env`.
+
+## Always-present modules
+
+- **Remote config** (protocol 10) — `src/modules/remoteConfig/`, served at `GET /api/v1/config`. Layers: `remoteConfig.defaults.ts` → `REMOTE_CONFIG_OVERRIDES` (env JSON patch, validated at boot — a bad key refuses to start) → `remoteConfig.rules.ts` (empty). Pure, no DB. **Additive-only:** never remove or rename a key without bumping `SCHEMA_VERSION`; any number the server enforces is imported, never retyped. `npm run check:config`. See `docs/REMOTE_CONFIG.md`.
+- **Legal pages** (protocol 12) — `src/modules/legal/`. Prose must match what the code does; change both in the same commit, and quote retention windows from `config/constants.ts`. `npm run check:legal`.
 
 ## Architecture / Conventions
 

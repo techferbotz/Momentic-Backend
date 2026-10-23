@@ -1,7 +1,9 @@
-import jwt from 'jsonwebtoken';
+import jwt, { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
+import type { SignOptions } from 'jsonwebtoken';
 import { env } from '../config/env';
 import { RENDER } from '../config/constants';
 import { ErrorCode, NotFoundError, UnauthorizedError } from '../errors/AppError';
+import { logger } from '../utils/logger';
 
 /** The only module that imports jsonwebtoken. */
 
@@ -15,22 +17,34 @@ export interface AccessTokenClaims {
 }
 
 /**
- * Short-lived (15 min by default) and carries identity only. Entitlement lives
- * in the database: a token minted before a purchase would otherwise deny access
- * the user has already paid for, for the life of the token.
+ * HOA protocol 04: the access token never expires by default. With
+ * `JWT_EXPIRES_IN` unset the token carries no `exp` claim at all, so a signed-in
+ * creator is never sent back to sign-in by the clock, and there is no refresh
+ * token because there is nothing to refresh. Rotating JWT_SECRET is the only way
+ * to invalidate issued tokens, and it signs every user out at once.
+ *
+ * Carries identity only. Entitlement lives in the database: a token minted
+ * before a purchase would otherwise deny access the user has already paid for.
  */
-export function signAccessToken(userId: string): { token: string; expiresIn: number } {
-  const expiresIn = env.accessTokenTtlSeconds;
-  const token = jwt.sign({}, env.jwtSecret, {
+export function signAccessToken(userId: string): string {
+  const options: SignOptions = {
     subject: userId,
     issuer: ISSUER,
     audience: AUDIENCE,
     algorithm: 'HS256',
-    expiresIn,
-  });
-  return { token, expiresIn };
+    // env.ts validated the value against the grammar `expiresIn` accepts.
+    ...(env.jwtExpiresIn === null
+      ? {}
+      : { expiresIn: env.jwtExpiresIn as SignOptions['expiresIn'] }),
+  };
+  return jwt.sign({}, env.jwtSecret, options);
 }
 
+/**
+ * The 401 stays opaque, but the reason is logged — "invalid signature" (a
+ * rotated secret), "jwt audience invalid" (another environment's token) — since
+ * an opaque 401 that logs nothing is undiagnosable. Never logs the token.
+ */
 export function verifyAccessToken(token: string): AccessTokenClaims {
   try {
     const payload = jwt.verify(token, env.jwtSecret, {
@@ -41,9 +55,17 @@ export function verifyAccessToken(token: string): AccessTokenClaims {
     const userId = typeof payload === 'string' ? undefined : payload.sub;
     if (!userId) throw new Error('missing subject');
     return { userId };
-  } catch {
-    throw new UnauthorizedError('Invalid or expired access token', ErrorCode.INVALID_TOKEN);
+  } catch (err) {
+    logger.warn('Access token rejected', { reason: tokenRejectionReason(err) });
+    throw new UnauthorizedError('Invalid access token', ErrorCode.INVALID_TOKEN);
   }
+}
+
+function tokenRejectionReason(err: unknown): string {
+  // Checked first: TokenExpiredError extends JsonWebTokenError.
+  if (err instanceof TokenExpiredError) return `jwt expired at ${err.expiredAt.toISOString()}`;
+  if (err instanceof JsonWebTokenError) return err.message;
+  return err instanceof Error ? err.message : 'unknown error';
 }
 
 /**

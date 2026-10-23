@@ -262,7 +262,6 @@ async function main(): Promise<void> {
 
   // ---- Sign in and claim ---------------------------------------------------
   let accessToken = '';
-  let refreshToken = '';
 
   await check('the dev login mints a session', async () => {
     if (!env.testLoginSecret) {
@@ -280,8 +279,8 @@ async function main(): Promise<void> {
       'test login',
     );
     accessToken = data.accessToken;
-    refreshToken = data.refreshToken;
-    expectTrue(accessToken.length > 0 && refreshToken.length > 0, 'tokens issued');
+    expectTrue(accessToken.length > 0, 'token issued');
+    expectTrue(data.refreshToken === undefined, 'no refresh token (HOA protocol 04)');
   });
 
   if (accessToken) {
@@ -307,28 +306,10 @@ async function main(): Promise<void> {
       expectEqual((await call(`/creations/${creationId}`, { draftToken })).status, 404, 'status');
     });
 
-    await check('refresh rotates, and replaying the old token kills the family', async () => {
-      const rotated = envelopeOk(
-        await call('/auth/refresh', {
-          method: 'POST',
-          body: JSON.stringify({ refreshToken }),
-        }),
-        'refresh',
-      );
-      expectTrue(rotated.refreshToken !== refreshToken, 'a new refresh token was issued');
-
-      const replay = await call('/auth/refresh', {
-        method: 'POST',
-        body: JSON.stringify({ refreshToken }),
-      });
-      expectEqual(replay.status, 401, 'replay is rejected');
-      expectEqual(replay.body.code, 'REFRESH_REUSED', 'theft detected');
-
-      const afterRevoke = await call('/auth/refresh', {
-        method: 'POST',
-        body: JSON.stringify({ refreshToken: rotated.refreshToken }),
-      });
-      expectEqual(afterRevoke.status, 401, 'the whole family was revoked');
+    await check('the access token carries no expiry', async () => {
+      const [, payload = ''] = accessToken.split('.');
+      const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+      expectTrue(claims.exp === undefined, `unexpected exp claim ${claims.exp}`);
     });
 
     await check('stats are readable for an owned creation', async () => {
@@ -386,6 +367,15 @@ async function main(): Promise<void> {
     );
     expectEqual((await call(`/creations/${creationId}`, { ...auth })).status, 404, 'gone after delete');
   });
+
+  if (accessToken) {
+    await check('deleting the account locks its never-expiring token out', async () => {
+      expectEqual((await call('/me', { method: 'DELETE', accessToken })).status, 200, 'delete');
+      const after = await call('/me', { accessToken });
+      expectEqual(after.status, 401, 'status after deletion');
+      expectEqual(after.body.code, 'INVALID_TOKEN', 'code');
+    });
+  }
 
   if (skipped.length > 0) {
     console.log(`\nskipped (not configured):\n${skipped.map((s) => `  - ${s}`).join('\n')}`);

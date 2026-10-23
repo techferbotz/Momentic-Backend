@@ -45,30 +45,9 @@ model User {
   creations     Creation[]
   images        Image[]
   purchases     Purchase[]
-  refreshTokens RefreshToken[]
   draftSessions DraftSession[]
 
   @@index([deletedAt])
-}
-
-model RefreshToken {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  /// sha256 of the opaque 32-byte token. The raw token is never stored.
-  tokenHash String @unique
-  /// Rotation family. Presenting an already-rotated token revokes the whole family.
-  familyId  String
-
-  expiresAt    DateTime
-  revokedAt    DateTime?
-  replacedById String?
-  createdAt    DateTime  @default(now())
-
-  @@index([userId])
-  @@index([familyId])
-  @@index([expiresAt])
 }
 
 /// Anonymous ownership for drafts created before the user signs in.

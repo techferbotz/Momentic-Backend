@@ -1,12 +1,11 @@
 import type { User } from '@prisma/client';
 import { env } from '../config/env';
 import { ErrorCode, ForbiddenError, NotFoundError, UnauthorizedError } from '../errors/AppError';
-import { signAccessToken } from '../auth/jwt';
+import { signAccessToken, verifyAccessToken } from '../auth/jwt';
 import { verifyGoogleIdToken } from '../auth/googleAuth';
 import * as userRepo from '../repositories/userRepo';
-import * as refreshTokenRepo from '../repositories/refreshTokenRepo';
 import * as draftSessionService from './draftSessionService';
-import { generateOpaqueToken, hashToken, randomId, safeCompare } from '../utils/crypto';
+import { safeCompare } from '../utils/crypto';
 import { logger } from '../utils/logger';
 
 export interface PublicUser {
@@ -18,9 +17,8 @@ export interface PublicUser {
 }
 
 export interface AuthSession {
+  /** Never expires unless JWT_EXPIRES_IN says otherwise (HOA protocol 04). */
   accessToken: string;
-  expiresIn: number;
-  refreshToken: string;
   user: PublicUser;
   claimed?: { creations: number; images: number };
 }
@@ -35,26 +33,6 @@ export function toPublicUser(user: User): PublicUser {
   };
 }
 
-async function issueSession(userId: string, familyId: string): Promise<{
-  accessToken: string;
-  expiresIn: number;
-  refreshToken: string;
-  refreshTokenId: string;
-}> {
-  const { token: accessToken, expiresIn } = signAccessToken(userId);
-  const refreshToken = generateOpaqueToken();
-  const expiresAt = new Date(Date.now() + env.refreshTokenTtlDays * 24 * 60 * 60 * 1000);
-
-  const row = await refreshTokenRepo.create({
-    userId,
-    tokenHash: hashToken(refreshToken),
-    familyId,
-    expiresAt,
-  });
-
-  return { accessToken, expiresIn, refreshToken, refreshTokenId: row.id };
-}
-
 /**
  * Sign-in happens at publish time, so the caller can hand us the device's draft
  * token and have its work adopted in the same round trip — that moment is the
@@ -66,66 +44,32 @@ export async function loginWithGoogle(
 ): Promise<AuthSession> {
   const identity = await verifyGoogleIdToken(idToken);
   const user = await userRepo.upsertFromGoogle(identity);
-  const issued = await issueSession(user.id, randomId());
 
   const claimed = draftToken ? await draftSessionService.claim(draftToken, user.id) : undefined;
 
   return {
-    accessToken: issued.accessToken,
-    expiresIn: issued.expiresIn,
-    refreshToken: issued.refreshToken,
+    accessToken: signAccessToken(user.id),
     user: toPublicUser(user),
     ...(claimed ? { claimed } : {}),
   };
 }
 
 /**
- * Rotating refresh with theft detection.
+ * Turns a bearer token into a user id, or rejects it.
  *
- * Each refresh mints a replacement and revokes the presented token. If a token
- * that was already rotated shows up again, two parties hold the same secret —
- * we can't tell which one is the thief, so the entire rotation family is revoked
- * and both are forced to sign in again.
+ * The token never expires, so a signature check alone would keep a deleted
+ * account working forever. One primary-key lookup per signed-in request is the
+ * price of deletion meaning deletion. Signing back in with the same Google
+ * account restores the account, and with it any token it still holds.
  */
-export async function refresh(rawToken: string): Promise<AuthSession> {
-  const existing = await refreshTokenRepo.findByHash(hashToken(rawToken));
-
-  if (!existing) {
-    throw new UnauthorizedError('Invalid refresh token', ErrorCode.INVALID_TOKEN);
-  }
-
-  if (existing.revokedAt) {
-    await refreshTokenRepo.revokeFamily(existing.familyId);
-    logger.warn('Refresh token reuse detected — family revoked', {
-      userId: existing.userId,
-      familyId: existing.familyId,
-    });
-    throw new UnauthorizedError('Session expired, please sign in again', ErrorCode.REFRESH_REUSED);
-  }
-
-  if (existing.expiresAt.getTime() <= Date.now()) {
-    throw new UnauthorizedError('Refresh token expired', ErrorCode.INVALID_TOKEN);
-  }
-
-  const user = await userRepo.findActiveById(existing.userId);
+export async function authenticate(token: string): Promise<string> {
+  const { userId } = verifyAccessToken(token);
+  const user = await userRepo.findActiveById(userId);
   if (!user) {
-    throw new UnauthorizedError('Invalid refresh token', ErrorCode.INVALID_TOKEN);
+    logger.warn('Access token rejected', { reason: 'account deleted or missing' });
+    throw new UnauthorizedError('Invalid access token', ErrorCode.INVALID_TOKEN);
   }
-
-  const issued = await issueSession(user.id, existing.familyId);
-  await refreshTokenRepo.markRotated(existing.id, issued.refreshTokenId);
-
-  return {
-    accessToken: issued.accessToken,
-    expiresIn: issued.expiresIn,
-    refreshToken: issued.refreshToken,
-    user: toPublicUser(user),
-  };
-}
-
-/** Logout is best-effort by design: an unknown token is already not a session. */
-export async function logout(rawToken: string): Promise<void> {
-  await refreshTokenRepo.revokeByHash(hashToken(rawToken));
+  return userId;
 }
 
 export async function getProfile(userId: string): Promise<PublicUser> {
@@ -166,12 +110,5 @@ export async function testLogin(secret: string, email: string): Promise<AuthSess
     name: email.split('@')[0] ?? 'Tester',
     avatarUrl: null,
   });
-  const issued = await issueSession(user.id, randomId());
-
-  return {
-    accessToken: issued.accessToken,
-    expiresIn: issued.expiresIn,
-    refreshToken: issued.refreshToken,
-    user: toPublicUser(user),
-  };
+  return { accessToken: signAccessToken(user.id), user: toPublicUser(user) };
 }
