@@ -85,7 +85,8 @@ write a new migration.
 ## Deploying from git (HOA protocol 05)
 
 The box holds a git checkout at `/opt/apps/momentica/Momentica-Backend`, tracking
-`master` on `git@github.com:techferbotz/Momentica-Backend.git`. The instance
+`master` on `git@github.com:techferbotz/Momentic-Backend.git` (the GitHub repo was renamed from
+`Momentica-Backend` on 2026-10-23; the checkout directory kept its old name). The instance
 authenticates to GitHub as `techferbotz` with a key already on it — the same way
 AuraPix, Billanta and Curiously are checked out.
 
