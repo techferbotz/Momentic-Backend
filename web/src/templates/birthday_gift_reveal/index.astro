@@ -1,0 +1,1172 @@
+---
+import Photo from '../../components/Photo.astro';
+import { Values } from '../../lib/values';
+import type { RenderPayload } from '../../lib/types';
+
+interface Props {
+  payload: RenderPayload;
+}
+
+const { payload } = Astro.props;
+const v = new Values(payload.values);
+
+const ACCENTS = ['blush', 'gold', 'midnight'] as const;
+
+const recipient = v.text('recipientName');
+const age = v.number('age');
+const message = v.text('message');
+const photos = v.images('photos');
+const accent = v.choice('accent', ACCENTS, 'blush');
+
+// A one-line wish reads better large and centred; anything the creator broke
+// into paragraphs is a letter and keeps the left edge.
+const shortMessage = message.length <= 90 && !message.includes('\n');
+
+// It is the longest WORD that has to fit, not the whole name: "Venkataramana"
+// is wider than the tag at full size, and a name broken mid-word reads like a
+// typo on the one word that matters. Counted in code points, so an emoji is
+// one character rather than two.
+const longestWord = Math.max(0, ...recipient.split(/\s+/).map((word) => [...word].length));
+const nameSize = longestWord > 13 ? 'small' : longestWord > 10 ? 'medium' : 'large';
+
+// Fixed rather than random, so a reload never reshuffles somebody's photos
+// into a different-looking pile.
+const TILTS = [-3, 4, -2, 5, -4, 2];
+---
+
+{/* Set before paint so the box never flashes open. Without JavaScript there is
+     no box at all: the message and photos simply render, which is the right
+     fallback for a page whose job is delivering them. */}
+<script is:inline>document.documentElement.classList.add('js');</script>
+
+<main class="surprise" data-accent={accent} data-name={nameSize}>
+  <section class="stage" data-stage>
+    <button class="gift" type="button" data-open aria-expanded="false">
+      <span class="sr-only">Open the surprise</span>
+      <span class="glow" aria-hidden="true"></span>
+
+      {/* One drawing, two layers: the lid group flies off on its own, so it
+          carries the bow and the ribbon tails with it. */}
+      <svg class="art" viewBox="20 26 260 264" aria-hidden="true" focusable="false">
+        <defs>
+          <pattern id="gr-dots" width="18" height="18" patternUnits="userSpaceOnUse">
+            <circle class="dot" cx="4.5" cy="4.5" r="2.2"></circle>
+            <circle class="dot" cx="13.5" cy="13.5" r="2.2"></circle>
+          </pattern>
+          <linearGradient id="gr-side" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#fff" stop-opacity="0.3"></stop>
+            <stop offset="0.45" stop-color="#fff" stop-opacity="0"></stop>
+            <stop offset="1" stop-color="#000" stop-opacity="0.1"></stop>
+          </linearGradient>
+          <linearGradient id="gr-top" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#fff" stop-opacity="0.5"></stop>
+            <stop offset="0.55" stop-color="#fff" stop-opacity="0"></stop>
+            <stop offset="1" stop-color="#000" stop-opacity="0.07"></stop>
+          </linearGradient>
+          <linearGradient id="gr-fall" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#000" stop-opacity="0.16"></stop>
+            <stop offset="1" stop-color="#000" stop-opacity="0"></stop>
+          </linearGradient>
+          <filter id="gr-blur" x="-20%" y="-200%" width="140%" height="500%">
+            <feGaussianBlur stdDeviation="5"></feGaussianBlur>
+          </filter>
+        </defs>
+
+        <ellipse class="floor" cx="150" cy="281" rx="112" ry="8" filter="url(#gr-blur)"></ellipse>
+
+        <g class="body">
+          {/* The lit inside of the box, seen over its front edge. Hidden under
+              the lid until the lid goes. */}
+          <path class="mouth" d="M52 134 L60 125 H240 L248 134 Z"></path>
+          <rect class="paper" x="46" y="134" width="208" height="146" rx="8"></rect>
+          <rect x="46" y="134" width="208" height="146" rx="8" fill="url(#gr-dots)"></rect>
+          <rect class="band" x="135" y="134" width="30" height="146"></rect>
+          <rect class="sheen" x="140" y="134" width="6" height="146"></rect>
+          <path class="edge" d="M135.5 134v146M164.5 134v146"></path>
+          <rect x="46" y="134" width="208" height="146" rx="8" fill="url(#gr-side)"></rect>
+          <rect class="fall" x="46" y="144" width="208" height="14" fill="url(#gr-fall)"></rect>
+        </g>
+
+        <path class="string" d="M150 107 C 146 124, 154 140, 150 158"></path>
+
+        <g class="lid">
+          <rect class="paper" x="36" y="104" width="228" height="40" rx="7"></rect>
+          <rect x="36" y="104" width="228" height="40" rx="7" fill="url(#gr-dots)"></rect>
+          <rect class="band" x="135" y="104" width="30" height="40"></rect>
+          <rect class="sheen" x="140" y="104" width="6" height="40"></rect>
+          <path class="edge" d="M135.5 104v40M164.5 104v40"></path>
+          <rect x="36" y="104" width="228" height="40" rx="7" fill="url(#gr-top)"></rect>
+
+          <path class="band tail" d="M146 102 L117 152 L127 147 L131 158 L156 106 Z"></path>
+          <path class="band tail" d="M154 102 L183 152 L173 147 L169 158 L144 106 Z"></path>
+          <path class="band loop" d="M150 100 C 133 72, 94 58, 88 82 C 84 100, 122 108, 150 100 Z"></path>
+          <path class="fold" d="M150 100 C 137 84, 108 74, 104 86 C 101 96, 126 102, 150 100 Z"></path>
+          <path class="band loop" d="M150 100 C 167 72, 206 58, 212 82 C 216 100, 178 108, 150 100 Z"></path>
+          <path class="fold" d="M150 100 C 163 84, 192 74, 196 86 C 199 96, 174 102, 150 100 Z"></path>
+          <rect class="band knot" x="139" y="89" width="22" height="19" rx="7"></rect>
+          <rect class="sheen" x="143" y="92" width="8" height="5" rx="2.5"></rect>
+        </g>
+      </svg>
+
+      {/* The name goes on a tag rather than into the drawing: SVG cannot wrap
+          text, and a forty-character name has to fit. Its hole sits exactly
+          where the string ends, at 50% down the art. */}
+      <span class="tag" aria-hidden="true">
+        <span class="tag-card">
+          <span class="tag-for">For</span>
+          <span class="tag-name">{recipient || 'you'}</span>
+        </span>
+      </span>
+
+      <svg class="spark s1" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 0C11 7 13 9 20 10 13 11 11 13 10 20 9 13 7 11 0 10 7 9 9 7 10 0Z"></path></svg>
+      <svg class="spark s2" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 0C11 7 13 9 20 10 13 11 11 13 10 20 9 13 7 11 0 10 7 9 9 7 10 0Z"></path></svg>
+      <svg class="spark s3" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 0C11 7 13 9 20 10 13 11 11 13 10 20 9 13 7 11 0 10 7 9 9 7 10 0Z"></path></svg>
+      <svg class="spark s4" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 0C11 7 13 9 20 10 13 11 11 13 10 20 9 13 7 11 0 10 7 9 9 7 10 0Z"></path></svg>
+    </button>
+    <p class="prompt" aria-hidden="true">Tap to unwrap</p>
+  </section>
+
+  <article class="inside" data-inside>
+    <header class="hello">
+      {age !== undefined && (
+        <p class="age">
+          <span class="sr-only">Turning </span>
+          <span class="age-num">{age}</span>
+        </p>
+      )}
+      <h1>
+        <span class="wish">Happy birthday</span>
+        {recipient && <span class="sr-only">, </span>}
+        {recipient && <span class="name">{recipient}</span>}
+      </h1>
+    </header>
+
+    <div class="card">
+      <svg class="card-bow" viewBox="84 62 132 48" aria-hidden="true" focusable="false">
+        <path class="band" d="M150 100 C 133 72, 94 58, 88 82 C 84 100, 122 108, 150 100 Z"></path>
+        <path class="fold" d="M150 100 C 137 84, 108 74, 104 86 C 101 96, 126 102, 150 100 Z"></path>
+        <path class="band" d="M150 100 C 167 72, 206 58, 212 82 C 216 100, 178 108, 150 100 Z"></path>
+        <path class="fold" d="M150 100 C 163 84, 192 74, 196 86 C 199 96, 174 102, 150 100 Z"></path>
+        <rect class="band" x="139" y="89" width="22" height="19" rx="7"></rect>
+      </svg>
+      <p class:list={['message', { short: shortMessage }]}>{message}</p>
+    </div>
+
+    {photos.length === 1 && (
+      <section class="photos" aria-label="Photo">
+        <figure class="print single">
+          <Photo image={photos[0] ?? null} alt={recipient ? `A photo for ${recipient}` : 'A photo'} />
+        </figure>
+      </section>
+    )}
+
+    {photos.length > 1 && (
+      <section class="photos" aria-label="Photos">
+        <div class="deck" data-deck>
+          {photos.map((photo, i) => (
+            <figure class="print" data-print style={`--tilt: ${TILTS[i % TILTS.length]}deg`}>
+              <Photo
+                image={photo}
+                alt={recipient ? `Photo ${i + 1} for ${recipient}` : `Photo ${i + 1}`}
+              />
+            </figure>
+          ))}
+        </div>
+        <button class="next" type="button" data-next>
+          <span><span data-count>1</span> of {photos.length}</span>
+          <span class="next-arrow" aria-hidden="true">→</span>
+          <span class="sr-only">Show the next photo</span>
+        </button>
+      </section>
+    )}
+
+    <footer class="again">
+      <button type="button" data-rewrap>
+        <span aria-hidden="true">↺</span>
+        Wrap it up again
+      </button>
+    </footer>
+  </article>
+
+  <canvas class="confetti" data-confetti aria-hidden="true"></canvas>
+</main>
+
+<style>
+  /* ---- ribbon palettes ---------------------------------------------------
+     The field is labelled "Ribbon colour", and the ribbon is where it shows
+     first. But like the letter's occasions it sets the whole page: a midnight
+     ribbon arrives on a night-blue stage with gold trim, not as one navy
+     stripe on pink. */
+  .surprise[data-accent='blush'] {
+    --stage-top: #fbe8ec;
+    --stage-bottom: #f0c6d1;
+    --chrome: #fbe8ec;
+    --wrap: #fffaf5;
+    --wrap-dot: rgba(209, 96, 123, 0.16);
+    --mouth: #ffe9dc;
+    --ribbon: #d4677f;
+    --ribbon-deep: #a9405a;
+    --ribbon-edge: rgba(130, 40, 62, 0.35);
+    --string: #a9405a;
+    --floor: rgba(120, 50, 70, 0.22);
+    --glow: rgba(255, 244, 228, 0.95);
+    --spark: #d4677f;
+    --text: #2f2521;
+    --text-soft: #7d5a62;
+    --eyebrow: #a9405a;
+    --foil-a: #b8475f;
+    --foil-b: #ec9aac;
+    --pill: rgba(255, 255, 255, 0.6);
+    --confetti: #d4677f, #f3b6c4, #f6d58e, #ffffff, #9fd3c7, #a9405a;
+  }
+  .surprise[data-accent='gold'] {
+    --stage-top: #fcf3e1;
+    --stage-bottom: #f1dcb0;
+    --chrome: #fcf3e1;
+    --wrap: #fffcf6;
+    --wrap-dot: rgba(190, 145, 60, 0.2);
+    --mouth: #fff0cf;
+    --ribbon: #c99b45;
+    --ribbon-deep: #94692a;
+    --ribbon-edge: rgba(110, 75, 20, 0.4);
+    --string: #94692a;
+    --floor: rgba(110, 80, 30, 0.22);
+    --glow: rgba(255, 238, 196, 0.95);
+    --spark: #c99b45;
+    --text: #3b2c1c;
+    --text-soft: #7a6448;
+    --eyebrow: #94692a;
+    --foil-a: #9c7026;
+    --foil-b: #e6c272;
+    --pill: rgba(255, 255, 255, 0.6);
+    --confetti: #c99b45, #ecd08a, #fff6dc, #d4677f, #f3b6c4, #8a6420;
+  }
+  .surprise[data-accent='midnight'] {
+    --stage-top: #182042;
+    --stage-bottom: #2b3566;
+    --chrome: #182042;
+    --wrap: #f8f2e7;
+    --wrap-dot: rgba(36, 48, 100, 0.14);
+    --mouth: #ffe6b0;
+    --ribbon: #26326b;
+    --ribbon-deep: #161f4a;
+    /* Gold stitching, so a navy bow still reads against a navy night. */
+    --ribbon-edge: #d8b867;
+    --string: #d8b867;
+    --floor: rgba(0, 0, 0, 0.4);
+    --glow: rgba(255, 234, 186, 0.9);
+    --spark: #fff3cf;
+    --text: #f6efe2;
+    --text-soft: #c4c3d8;
+    --eyebrow: #e2c27a;
+    --foil-a: #d8b867;
+    --foil-b: #fff1c9;
+    --pill: rgba(255, 255, 255, 0.12);
+    --confetti: #e2c27a, #fff3cf, #8fa3ef, #c8d1ff, #f3b6c4, #ffffff;
+  }
+
+  /* The body shows past the page on an overscroll bounce. */
+  :global(body:has(.surprise[data-accent='blush'])) {
+    background: #f0c6d1;
+  }
+  :global(body:has(.surprise[data-accent='gold'])) {
+    background: #f1dcb0;
+  }
+  :global(body:has(.surprise[data-accent='midnight'])) {
+    background: #2b3566;
+  }
+
+  .surprise {
+    position: relative;
+    min-height: 100svh;
+    background: linear-gradient(170deg, var(--stage-top) 0%, var(--stage-bottom) 100%);
+    overflow: hidden;
+  }
+
+  /* While it is still wrapped, the box IS the page. */
+  :global(html.js body:has(.surprise:not(.is-open))) {
+    overflow: hidden;
+  }
+
+  /* ---- the wrapped box --------------------------------------------------- */
+  /* Fixed to the viewport, and opaque, so the box opens on a full screen no
+     matter how long the message under it is — and nothing underneath can be
+     glimpsed before it is unwrapped. */
+  .stage {
+    display: none;
+  }
+
+  :global(html.js) .stage {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 34px;
+    padding: calc(24px + var(--safe-t)) 24px calc(24px + var(--safe-b));
+    background: linear-gradient(170deg, var(--stage-top) 0%, var(--stage-bottom) 100%);
+    cursor: pointer;
+    transition: opacity 650ms var(--ease), visibility 0s linear 0s;
+  }
+
+  .surprise.is-open .stage {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 650ms var(--ease), visibility 0s linear 650ms;
+  }
+
+  .gift {
+    position: relative;
+    width: min(70vw, 290px);
+    aspect-ratio: 260 / 264;
+    transform-origin: 50% 92%;
+    animation: nudge 4.6s ease-in-out 1.6s infinite;
+  }
+
+  .art {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .dot {
+    fill: var(--wrap-dot);
+  }
+
+  .paper {
+    fill: var(--wrap);
+  }
+
+  .mouth {
+    fill: var(--mouth);
+  }
+
+  .band {
+    fill: var(--ribbon);
+  }
+
+  .loop,
+  .tail,
+  .knot {
+    stroke: var(--ribbon-edge);
+    stroke-width: 1.2;
+    stroke-linejoin: round;
+  }
+
+  .edge {
+    stroke: var(--ribbon-edge);
+    stroke-width: 1;
+    fill: none;
+  }
+
+  .fold {
+    fill: var(--ribbon-deep);
+    opacity: 0.55;
+  }
+
+  .sheen {
+    fill: #fff;
+    opacity: 0.2;
+  }
+
+  .floor {
+    fill: var(--floor);
+  }
+
+  .string {
+    fill: none;
+    stroke: var(--string);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    transition: opacity 200ms var(--ease);
+  }
+
+  .lid {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    transition: transform 700ms var(--ease), opacity 300ms var(--ease);
+  }
+
+  /* Light pouring out of the open box. Painted behind the drawing, so the box
+     itself hides the lower half and only what rises out of it shows. */
+  .glow {
+    position: absolute;
+    z-index: 0;
+    left: 50%;
+    top: 41%;
+    width: 160%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--glow) 0%, transparent 62%);
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 500ms var(--ease), opacity 300ms var(--ease);
+  }
+
+  .tag {
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    right: 0;
+    top: 50%;
+    width: fit-content;
+    min-width: 34%;
+    max-width: 64%;
+    margin-inline: auto;
+    /* Hangs from its hole, 11px below the top edge. */
+    transform: translateY(-11px) rotate(-4deg);
+    transform-origin: 50% 11px;
+    filter: drop-shadow(0 4px 6px rgba(60, 30, 40, 0.2));
+    transition: transform 500ms var(--ease), opacity 300ms var(--ease);
+  }
+
+  .tag-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    padding: 21px 14px 11px;
+    background: #ead7b7;
+    clip-path: polygon(13px 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 0 100%, 0 13px);
+    text-align: center;
+  }
+
+  /* The punched hole, and the string passing over the top edge into it. */
+  .tag-card::before {
+    content: '';
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    margin-left: -4px;
+    border-radius: 50%;
+    background: rgba(74, 54, 38, 0.22);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+  }
+
+  .tag-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 1.5px;
+    height: 11px;
+    margin-left: -0.75px;
+    background: var(--string);
+  }
+
+  .tag-for {
+    font-family: var(--font-ui);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(74, 54, 38, 0.6);
+  }
+
+  .tag-name {
+    font-family: var(--font-letter);
+    font-size: clamp(17px, 5.4vw, 22px);
+    line-height: 1.15;
+    color: #4a3626;
+    /* Last resort only: data-name sizes ordinary long names to fit whole. */
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+  }
+
+  .surprise[data-name='medium'] .tag-name {
+    font-size: 17px;
+  }
+
+  .surprise[data-name='small'] .tag-name {
+    font-size: 15px;
+  }
+
+  .spark {
+    position: absolute;
+    z-index: 2;
+    width: var(--s);
+    height: var(--s);
+    fill: var(--spark);
+    opacity: 0;
+    animation: twinkle 2.8s ease-in-out var(--d) infinite;
+    pointer-events: none;
+  }
+
+  .s1 {
+    --s: 18px;
+    --d: 0s;
+    left: -9%;
+    top: 8%;
+  }
+  .s2 {
+    --s: 24px;
+    --d: 0.9s;
+    right: -7%;
+    top: 0;
+  }
+  .s3 {
+    --s: 13px;
+    --d: 1.7s;
+    left: -13%;
+    top: 60%;
+  }
+  .s4 {
+    --s: 16px;
+    --d: 2.3s;
+    right: -11%;
+    top: 68%;
+  }
+
+  .prompt {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: var(--text-soft);
+    animation: pulse 2.6s ease-in-out infinite;
+    transition: opacity 300ms var(--ease);
+  }
+
+  /* ---- unwrapping, in three beats ----------------------------------------
+     is-opening: the box shakes and the tag falls away.
+     is-lifting: the lid flies, light comes out, confetti bursts.
+     is-open:    the stage clears and what was inside arrives. */
+  .surprise.is-opening .gift {
+    animation: shake 420ms ease-in-out both;
+  }
+
+  .surprise.is-opening .tag {
+    transform: translateY(46px) rotate(24deg);
+    opacity: 0;
+    transition: transform 520ms cubic-bezier(0.5, 0, 0.9, 0.5), opacity 300ms ease 180ms;
+  }
+
+  .surprise.is-opening .string,
+  .surprise.is-opening .prompt,
+  .surprise.is-opening .spark {
+    opacity: 0;
+    animation: none;
+  }
+
+  .surprise.is-lifting .lid {
+    transform: translate(-26px, -170px) rotate(-24deg);
+    opacity: 0;
+    transition: transform 900ms cubic-bezier(0.16, 0.84, 0.3, 1), opacity 450ms ease 500ms;
+  }
+
+  .fall {
+    transition: opacity 300ms var(--ease);
+  }
+
+  .surprise.is-lifting .fall {
+    opacity: 0;
+  }
+
+  .surprise.is-lifting .glow {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    transition: transform 900ms cubic-bezier(0.16, 0.84, 0.3, 1), opacity 400ms var(--ease);
+  }
+
+  /* ---- what was inside --------------------------------------------------- */
+  .inside {
+    position: relative;
+    z-index: 2;
+    max-width: 34rem;
+    margin: 0 auto;
+    padding: calc(60px + var(--safe-t)) 22px calc(112px + var(--safe-b));
+    text-align: center;
+  }
+
+  .inside:focus {
+    outline: none;
+  }
+
+  :global(html.js) .inside {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 400ms var(--ease), visibility 0s linear 400ms;
+  }
+
+  :global(html.js) .surprise.is-open .inside {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 500ms var(--ease) 100ms, visibility 0s linear 0s;
+  }
+
+  .hello {
+    margin: 0 0 38px;
+  }
+
+  .age {
+    margin: 0 0 4px;
+    font-size: clamp(88px, 28vw, 132px);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    color: var(--foil-a);
+  }
+
+  /* A foil numeral, like the balloon on the cake. Plain colour where
+     background-clip text is not supported. */
+  @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    .age-num {
+      background: linear-gradient(165deg, var(--foil-b) 0%, var(--foil-a) 48%, var(--foil-b) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      /* Room for the descender-free numerals to keep their full gradient. */
+      padding: 0 0.04em;
+    }
+  }
+
+  h1 {
+    margin: 0;
+    font-weight: 400;
+  }
+
+  .wish {
+    display: block;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--eyebrow);
+  }
+
+  .name {
+    display: block;
+    margin-top: 10px;
+    font-size: clamp(40px, 12vw, 58px);
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+  }
+
+  .surprise[data-name='medium'] .name {
+    font-size: clamp(34px, 10vw, 50px);
+  }
+
+  .surprise[data-name='small'] .name {
+    font-size: clamp(28px, 8.4vw, 42px);
+  }
+
+  .card {
+    position: relative;
+    margin: 0 0 44px;
+    padding: 38px 26px 32px;
+    background: var(--paper);
+    border-radius: 6px;
+    box-shadow: 0 16px 44px rgba(40, 20, 30, 0.16), 0 2px 6px rgba(40, 20, 30, 0.08);
+    text-align: left;
+  }
+
+  .card-bow {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    width: 78px;
+    transform: translateX(-50%);
+    overflow: visible;
+  }
+
+  .card-bow .band {
+    stroke: var(--ribbon-edge);
+    stroke-width: 1.2;
+  }
+
+  .message {
+    margin: 0;
+    /* longText keeps the creator's own line breaks. */
+    white-space: pre-wrap;
+    font-size: 18px;
+    line-height: 1.75;
+    color: var(--ink);
+    text-wrap: pretty;
+  }
+
+  .message.short {
+    font-size: 22px;
+    line-height: 1.5;
+    text-align: center;
+    text-wrap: balance;
+  }
+
+  .photos {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .deck {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+  }
+
+  .print {
+    margin: 0;
+    width: min(74vw, 300px);
+    padding: 10px 10px 42px;
+    background: #fff;
+    border-radius: 2px;
+    box-shadow: 0 10px 28px rgba(40, 20, 30, 0.2), 0 1px 3px rgba(40, 20, 30, 0.12);
+    transform: rotate(var(--tilt, -2deg));
+  }
+
+  .print :global(img) {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    background: #efe6e1;
+  }
+
+  /* With JavaScript the photos become a pile you tap through. Every print
+     shares one grid cell; depth sets the offset and the stacking. */
+  :global(html.js) .deck {
+    display: grid;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  :global(html.js) .deck > .print {
+    grid-area: 1 / 1;
+    transform: translate(calc(min(var(--depth, 0), 3) * 5px), calc(min(var(--depth, 0), 3) * 4px))
+      rotate(var(--tilt));
+    transition: transform 460ms var(--ease);
+  }
+
+  :global(html.js) .deck > .print.is-leaving {
+    transform: translate(calc(var(--fly, 1) * 118%), -6%) rotate(calc(var(--fly, 1) * 18deg));
+    transition: transform 320ms cubic-bezier(0.4, 0, 0.9, 0.6);
+  }
+
+  .next {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    background: var(--pill);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 13.5px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(40, 20, 30, 0.1);
+  }
+
+  :global(html.js) .next {
+    display: inline-flex;
+  }
+
+  .next-arrow {
+    font-size: 15px;
+    opacity: 0.7;
+  }
+
+  .again {
+    display: none;
+    margin-top: 60px;
+  }
+
+  :global(html.js) .again {
+    display: block;
+  }
+
+  .again button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    color: var(--text-soft);
+    font-family: var(--font-ui);
+    font-size: 13.5px;
+    opacity: 0.85;
+  }
+
+  /* Staggered arrival, only once the box has opened. */
+  .surprise.is-open .age {
+    animation: pop 900ms cubic-bezier(0.34, 1.56, 0.64, 1) 160ms both;
+  }
+
+  .surprise.is-open h1 {
+    animation: rise 760ms var(--ease) 320ms both;
+  }
+
+  .surprise.is-open .card {
+    animation: rise 760ms var(--ease) 480ms both;
+  }
+
+  .surprise.is-open .photos {
+    animation: rise 760ms var(--ease) 640ms both;
+  }
+
+  .confetti {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  @keyframes nudge {
+    0%,
+    72%,
+    100% {
+      transform: none;
+    }
+    76% {
+      transform: translateY(-7px) rotate(-3deg);
+    }
+    81% {
+      transform: translateY(-4px) rotate(3deg);
+    }
+    86% {
+      transform: translateY(-1px) rotate(-1.5deg);
+    }
+    90% {
+      transform: none;
+    }
+  }
+
+  @keyframes shake {
+    0% {
+      transform: none;
+    }
+    20% {
+      transform: scale(1.03, 0.95) rotate(-4deg);
+    }
+    45% {
+      transform: scale(0.98, 1.04) rotate(4deg);
+    }
+    70% {
+      transform: scale(1.02, 0.97) rotate(-2deg);
+    }
+    100% {
+      transform: none;
+    }
+  }
+
+  @keyframes twinkle {
+    0%,
+    100% {
+      opacity: 0;
+      transform: scale(0.5) rotate(0deg);
+    }
+    50% {
+      opacity: 0.9;
+      transform: scale(1) rotate(45deg);
+    }
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 0.85;
+    }
+    50% {
+      opacity: 0.4;
+    }
+  }
+
+  @keyframes pop {
+    0% {
+      opacity: 0;
+      transform: scale(0.4) rotate(-8deg);
+    }
+    60% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(22px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* The box is the interaction, not the decoration — a reduced-motion
+     recipient still taps to open it. The script skips the confetti and the
+     three beats; base.css resolves every animation to its end state. */
+  @media (prefers-reduced-motion: reduce) {
+    .gift,
+    .prompt,
+    .spark {
+      animation: none;
+    }
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    var root = document.querySelector('.surprise');
+    var stage = document.querySelector('[data-stage]');
+    var gift = document.querySelector('[data-open]');
+    var inside = document.querySelector('[data-inside]');
+    if (!root || !stage || !gift || !inside) return;
+
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var style = getComputedStyle(root);
+
+    // The browser chrome follows the palette. A midnight page under a pink
+    // address bar looks like two different sites.
+    var chrome = style.getPropertyValue('--chrome').trim();
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta && chrome) meta.setAttribute('content', chrome);
+
+    // ---- confetti --------------------------------------------------------
+    // One canvas, a few hundred rectangles, and a loop that only runs while
+    // something is in the air.
+    var canvas = root.querySelector('[data-confetti]');
+    var ctx = canvas && canvas.getContext ? canvas.getContext('2d') : null;
+    var colors = style
+      .getPropertyValue('--confetti')
+      .split(',')
+      .map(function (c) { return c.trim(); })
+      .filter(Boolean);
+    var pieces = [];
+    var running = false;
+    var last = 0;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    function fit() {
+      var w = Math.round(window.innerWidth * dpr);
+      var h = Math.round(window.innerHeight * dpr);
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
+    }
+
+    function burst(x, y, count, power, spread, ttl) {
+      if (!ctx || reduced || !colors.length) return;
+      fit();
+      for (var i = 0; i < count; i += 1) {
+        var angle = -Math.PI / 2 + (Math.random() - 0.5) * spread;
+        var speed = power * (0.35 + Math.random() * 0.65);
+        var round = Math.random() < 0.22;
+        pieces.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          w: round ? 5 + Math.random() * 3 : 6 + Math.random() * 5,
+          h: 9 + Math.random() * 8,
+          round: round,
+          color: colors[(Math.random() * colors.length) | 0],
+          rot: Math.random() * Math.PI * 2,
+          spin: (Math.random() - 0.5) * 12,
+          flip: Math.random() * Math.PI * 2,
+          flipRate: 5 + Math.random() * 7,
+          sway: 20 + Math.random() * 30,
+          age: 0,
+          ttl: ttl * (0.75 + Math.random() * 0.5),
+        });
+      }
+      if (pieces.length > 420) pieces.splice(0, pieces.length - 420);
+      if (!running) {
+        running = true;
+        last = performance.now();
+        requestAnimationFrame(frame);
+      }
+    }
+
+    function frame(now) {
+      var dt = Math.min((now - last) / 1000, 1 / 30);
+      last = now;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      var floor = window.innerHeight + 40;
+
+      for (var i = pieces.length - 1; i >= 0; i -= 1) {
+        var p = pieces[i];
+        p.age += dt;
+        // Air resistance does most of the work: a burst slows to a flutter
+        // within a second, then drifts down at roughly the speed paper falls.
+        p.vx -= p.vx * 2.6 * dt;
+        p.vy += (680 - p.vy * 2.6) * dt;
+        p.flip += p.flipRate * dt;
+        p.rot += p.spin * dt;
+        p.x += (p.vx + Math.sin(p.flip * 0.5) * p.sway) * dt;
+        p.y += p.vy * dt;
+
+        if (p.age > p.ttl || p.y > floor) {
+          pieces.splice(i, 1);
+          continue;
+        }
+
+        var c = Math.cos(p.rot);
+        var s = Math.sin(p.rot);
+        ctx.globalAlpha = Math.min(1, (p.ttl - p.age) / 0.6);
+        ctx.fillStyle = p.color;
+        ctx.setTransform(c * dpr, s * dpr, -s * dpr, c * dpr, p.x * dpr, p.y * dpr);
+        if (p.round) {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Scaling one side by cos(flip) is the whole "tumbling paper" trick.
+          var f = Math.cos(p.flip);
+          ctx.fillRect(-p.w / 2, (-p.h / 2) * f, p.w, p.h * f);
+        }
+      }
+
+      ctx.globalAlpha = 1;
+      if (pieces.length) {
+        requestAnimationFrame(frame);
+      } else {
+        running = false;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    // ---- unwrapping --------------------------------------------------------
+    var opened = false;
+    var timers = [];
+
+    function later(fn, ms) {
+      timers.push(setTimeout(fn, ms));
+    }
+
+    function reveal() {
+      root.classList.add('is-open');
+      // Land a keyboard or screen-reader user on what was inside, not on a
+      // box that no longer does anything.
+      inside.setAttribute('tabindex', '-1');
+      inside.focus({ preventScroll: true });
+    }
+
+    function open() {
+      if (opened) return;
+      opened = true;
+      gift.setAttribute('aria-expanded', 'true');
+
+      // The photos are lazy, but by the time anyone scrolls to them they
+      // should already be there.
+      Array.prototype.forEach.call(inside.querySelectorAll('img[loading="lazy"]'), function (img) {
+        img.loading = 'eager';
+      });
+
+      if (reduced) {
+        reveal();
+        return;
+      }
+
+      root.classList.add('is-opening');
+      later(function () {
+        root.classList.add('is-lifting');
+        var box = gift.getBoundingClientRect();
+        var x = box.left + box.width / 2;
+        var y = box.top + box.height * 0.41;
+        burst(x, y, 150, 1350, 1.9, 4.2);
+        later(function () {
+          burst(x, y, 60, 1000, 2.6, 3.6);
+        }, 140);
+      }, 380);
+      later(reveal, 1000);
+    }
+
+    // The whole stage opens it, not only the box: plenty of people tap the
+    // words that say "tap".
+    stage.addEventListener('click', open);
+
+    // So it can be shown to whoever is sitting next to them.
+    var again = root.querySelector('[data-rewrap]');
+    if (again) {
+      again.addEventListener('click', function () {
+        timers.forEach(clearTimeout);
+        timers = [];
+        window.scrollTo(0, 0);
+        root.classList.remove('is-open', 'is-lifting', 'is-opening');
+        inside.removeAttribute('tabindex');
+        opened = false;
+        gift.setAttribute('aria-expanded', 'false');
+        gift.focus({ preventScroll: true });
+      });
+    }
+
+    // "Tap around": once it is open, a tap on anything that is not a control,
+    // a photo or the words throws a little more confetti.
+    root.addEventListener('click', function (event) {
+      if (!root.classList.contains('is-open')) return;
+      var target = event.target;
+      if (target && target.closest && target.closest('button, a, [data-deck], .card')) return;
+      burst(event.clientX, event.clientY, 28, 560, Math.PI * 1.6, 2.4);
+    });
+
+    // ---- the photo pile ----------------------------------------------------
+    var deck = root.querySelector('[data-deck]');
+    if (deck) {
+      var prints = Array.prototype.slice.call(deck.querySelectorAll('[data-print]'));
+      var count = root.querySelector('[data-count]');
+      var next = root.querySelector('[data-next]');
+      // order[depth] = which print sits at that depth; 0 is the top.
+      var order = prints.map(function (_, i) {
+        return i;
+      });
+      var busy = false;
+      var flips = 0;
+
+      var layout = function () {
+        order.forEach(function (index, depth) {
+          prints[index].style.setProperty('--depth', String(depth));
+          prints[index].style.zIndex = String(prints.length - depth);
+        });
+        if (count) count.textContent = String(order[0] + 1);
+      };
+
+      var advance = function () {
+        if (busy) return;
+        busy = true;
+        var top = prints[order[0]];
+        // Alternate sides, so going through the pile has a rhythm.
+        top.style.setProperty('--fly', flips % 2 === 0 ? '1' : '-1');
+        flips += 1;
+        top.classList.add('is-leaving');
+        setTimeout(
+          function () {
+            // To the back of the pile. Its z-index drops at once, so it slides
+            // home behind the others rather than across them.
+            order.push(order.shift());
+            layout();
+            top.classList.remove('is-leaving');
+            busy = false;
+          },
+          reduced ? 0 : 320,
+        );
+      };
+
+      layout();
+      deck.addEventListener('click', advance);
+      if (next) next.addEventListener('click', advance);
+    }
+  })();
+</script>

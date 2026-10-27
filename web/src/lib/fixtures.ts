@@ -1,3 +1,5 @@
+import { getTemplate } from '@api/templates/registry';
+import birthdayGiftReveal from '../fixtures/birthday_gift_reveal.json';
 import greetingOpenLetter from '../fixtures/greeting_open_letter.json';
 import { manifestFor } from '../templates/manifest';
 import type { RouteOutcome } from './route';
@@ -15,8 +17,24 @@ interface Fixture {
  * seventh template adds a JSON file and one line here.
  */
 export const FIXTURES: Record<string, Record<string, Fixture>> = {
+  birthday_gift_reveal: birthdayGiftReveal as Record<string, Fixture>,
   greeting_open_letter: greetingOpenLetter as Record<string, Fixture>,
 };
+
+/**
+ * The link-preview copy the API would send: the registry's `og` strings with
+ * `{fieldKey}` filled from the values, falling back to the name and tagline
+ * when the placeholders fill to nothing.
+ */
+function fill(text: string, values: Record<string, unknown>): string {
+  return text
+    .replace(/\{([^}]+)\}/g, (_match, key: string) => {
+      const value = values[key];
+      return typeof value === 'string' || typeof value === 'number' ? String(value) : '';
+    })
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
 
 /**
  * Builds the same RouteOutcome the real route builds, so a fixture goes through
@@ -31,7 +49,8 @@ export function fixturePayload(
 ): RouteOutcome | undefined {
   const fixture = FIXTURES[templateId]?.[fixtureKey];
   const manifest = manifestFor(templateId);
-  if (!fixture || !manifest) return undefined;
+  const template = getTemplate(templateId);
+  if (!fixture || !manifest || !template) return undefined;
 
   const expired = mode === 'expired';
 
@@ -46,8 +65,8 @@ export function fixturePayload(
       showBranding: true,
     },
     og: {
-      title: `A letter for ${fixture.values.recipientName ?? 'you'}`,
-      description: 'A letter that unseals itself',
+      title: fill(template.og.title, fixture.values) || template.name,
+      description: fill(template.og.description, fixture.values) || template.tagline,
       imageUrl: manifest.ogCard,
     },
     features: { rsvp: false },

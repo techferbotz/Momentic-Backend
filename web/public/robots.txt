@@ -9,6 +9,8 @@
 User-agent: *
 Allow: /$
 Allow: /templates/
+# The shopfront's sample photos. Illustrations, never anyone's own.
+Allow: /samples/
 Disallow: /states/
 Disallow: /pv_
 Disallow: /d_

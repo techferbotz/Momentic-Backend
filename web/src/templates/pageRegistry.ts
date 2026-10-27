@@ -1,3 +1,4 @@
+import BirthdayGiftReveal from './birthday_gift_reveal/index.astro';
 import GreetingOpenLetter from './greeting_open_letter/index.astro';
 import { manifestFor } from './manifest';
 
@@ -13,6 +14,7 @@ import { manifestFor } from './manifest';
 type AstroPage = any;
 
 const PAGES: Record<string, AstroPage> = {
+  birthday_gift_reveal: BirthdayGiftReveal,
   greeting_open_letter: GreetingOpenLetter,
 };
 

@@ -1,6 +1,11 @@
 {
   "templates": [
     {
+      "id": "birthday_gift_reveal",
+      "ogCard": "/templates/birthday_gift_reveal/og.jpg",
+      "readsKeys": ["recipientName", "age", "message", "photos", "accent"]
+    },
+    {
       "id": "greeting_open_letter",
       "ogCard": "/templates/greeting_open_letter/og.jpg",
       "readsKeys": ["recipientName", "senderName", "occasion", "letter", "photo"]

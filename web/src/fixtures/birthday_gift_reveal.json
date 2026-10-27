@@ -1,0 +1,106 @@
+{
+  "sample": {
+    "label": "Blush, turning 27, two photos (the sample)",
+    "values": {
+      "recipientName": "Meera",
+      "age": 27,
+      "message": "Happy birthday! Tap around — there is more in here than you would think.",
+      "photos": [
+        { "full": "/samples/gift-1.webp", "thumb": "/samples/gift-1-t.webp", "width": 1080, "height": 1350 },
+        { "full": "/samples/gift-2.webp", "thumb": "/samples/gift-2-t.webp", "width": 1080, "height": 1350 }
+      ],
+      "accent": "blush"
+    }
+  },
+  "gold": {
+    "label": "Gold — turning 60, three photos",
+    "values": {
+      "recipientName": "Appa",
+      "age": 60,
+      "message": "Sixty, and you still beat all of us up the hill to the temple.\n\nThank you for the early mornings, the terrible jokes, and every single school run. Happy birthday.",
+      "photos": [
+        { "full": "/samples/gift-2.webp", "thumb": "/samples/gift-2-t.webp", "width": 1080, "height": 1350 },
+        { "full": "/fixtures/photo-4x5.webp", "thumb": "/fixtures/photo-4x5.webp", "width": 1080, "height": 1350 },
+        { "full": "/samples/gift-1.webp", "thumb": "/samples/gift-1-t.webp", "width": 1080, "height": 1350 }
+      ],
+      "accent": "gold"
+    }
+  },
+  "midnight": {
+    "label": "Midnight — turning 18, one photo",
+    "values": {
+      "recipientName": "Kavya",
+      "age": 18,
+      "message": "Eighteen! You are officially allowed to make your own terrible decisions now.\n\nWe are so proud of you. Go and have the best night.",
+      "photos": [
+        { "full": "/samples/gift-1.webp", "thumb": "/samples/gift-1-t.webp", "width": 1080, "height": 1350 }
+      ],
+      "accent": "midnight"
+    }
+  },
+  "no-photos": {
+    "label": "No photos and no age (both optional fields absent)",
+    "values": {
+      "recipientName": "Rohan",
+      "message": "Happy birthday to the only person who still replies to my voice notes. Same time next year?",
+      "accent": "blush"
+    }
+  },
+  "six-photos": {
+    "label": "Six photos — the field cap",
+    "values": {
+      "recipientName": "Ishaan",
+      "age": 7,
+      "message": "Seven whole years of you! Here are some of our favourite days so far. Tap through them all.",
+      "photos": [
+        { "full": "/samples/gift-1.webp", "thumb": "/samples/gift-1-t.webp", "width": 1080, "height": 1350 },
+        { "full": "/samples/gift-2.webp", "thumb": "/samples/gift-2-t.webp", "width": 1080, "height": 1350 },
+        { "full": "/fixtures/photo-4x5.webp", "thumb": "/fixtures/photo-4x5.webp", "width": 1080, "height": 1350 },
+        { "full": "/samples/gift-1.webp", "thumb": "/samples/gift-1-t.webp", "width": 1080, "height": 1350 },
+        { "full": "/samples/gift-2.webp", "thumb": "/samples/gift-2-t.webp", "width": 1080, "height": 1350 },
+        { "full": "/fixtures/photo-4x5.webp", "thumb": "/fixtures/photo-4x5.webp", "width": 1080, "height": 1350 }
+      ],
+      "accent": "gold"
+    }
+  },
+  "longest": {
+    "label": "Maximum length — 40-character name, 600-character message, age 120, six photos",
+    "values": {
+      "recipientName": "Venkataramana Subramanian Iyer Rajagopal",
+      "age": 120,
+      "message": "I wanted to write something short, and then I started remembering things.\n\nThe summer you taught yourself to swim because nobody else had the time. The year you moved cities and still called every Sunday. The way you save the last piece of cake for whoever looks like they need it most.\n\nYou make every room easier to be in. I hope this year is as kind to you as you are to everyone else in it. Eat the cake, open everything, and let somebody else do the dishes for once.\n\nHappy birthday. I am so glad you were born, and so lucky that you are mine to annoy for one more whole year. Call me later?",
+      "photos": [
+        { "full": "/samples/gift-2.webp", "thumb": "/samples/gift-2-t.webp", "width": 1080, "height": 1350 },
+        { "full": "/samples/gift-1.webp", "thumb": "/samples/gift-1-t.webp", "width": 1080, "height": 1350 },
+        { "full": "/fixtures/photo-4x5.webp", "thumb": "/fixtures/photo-4x5.webp", "width": 1080, "height": 1350 },
+        { "full": "/samples/gift-2.webp", "thumb": "/samples/gift-2-t.webp", "width": 1080, "height": 1350 },
+        { "full": "/samples/gift-1.webp", "thumb": "/samples/gift-1-t.webp", "width": 1080, "height": 1350 },
+        { "full": "/fixtures/photo-4x5.webp", "thumb": "/fixtures/photo-4x5.webp", "width": 1080, "height": 1350 }
+      ],
+      "accent": "midnight"
+    }
+  },
+  "shortest": {
+    "label": "Shortest plausible — two-letter name, first birthday, one-line message",
+    "values": {
+      "recipientName": "Jo",
+      "age": 1,
+      "message": "Happy birthday!",
+      "accent": "blush"
+    }
+  },
+  "photo-deleted": {
+    "label": "Two of three photos deleted after publishing (resolve to null), so one remains",
+    "values": {
+      "recipientName": "Nila",
+      "age": 30,
+      "message": "Thirty looks wonderful on you. Here is to the next ten being even louder.",
+      "photos": [
+        null,
+        { "full": "/samples/gift-2.webp", "thumb": "/samples/gift-2-t.webp", "width": 1080, "height": 1350 },
+        null
+      ],
+      "accent": "gold"
+    }
+  }
+}
